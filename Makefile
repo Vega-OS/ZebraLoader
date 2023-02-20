@@ -46,7 +46,8 @@ override INTERNALCFLAGS :=  \
     -DGNU_EFI_USE_MS_ABI    \
     -I.                     \
     -Ilimine-efi/inc        \
-    -Ilimine-efi/inc/x86_64
+    -Ilimine-efi/inc/x86_64 \
+		-Isrc/include/
 
 override CFILES := $(shell find ./src -type f -name '*.c')
 override OBJ := $(CFILES:.c=.o)
