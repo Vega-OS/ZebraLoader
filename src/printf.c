@@ -27,13 +27,13 @@ void clear_screen()
 
 void putchar(char ch)
 {
-  // Stop a bit before the end of the buffer for safety
+  /* Stop a bit before the end of the buffer for safety */
   if(buf_pos >= 250)
   {
     printf_flush();
   }
 
-  // Microsoft likes CRLF endings
+  /* Microsoft likes CRLF endings */
   if(ch == '\n')
   {
     buf[buf_pos++] = '\r';
