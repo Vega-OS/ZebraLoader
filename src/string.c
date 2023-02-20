@@ -1,7 +1,6 @@
 #include <string.h>
 
-size_t
-strlen(const char* str)
+size_t strlen(const char* str)
 {
   size_t len = 0;
   while (str[len++]);
@@ -9,8 +8,7 @@ strlen(const char* str)
 }
 
 
-void*
-memset(void* s, int c, size_t n)
+void* memset(void* s, int c, size_t n)
 {
   for (size_t i = 0; i < n; ++i)
   {
@@ -20,8 +18,7 @@ memset(void* s, int c, size_t n)
   return s;
 }
 
-void
-memcpy(void* dst, const void* src, size_t n)
+void memcpy(void* dst, const void* src, size_t n)
 {
   for (size_t i = 0; i < n; ++i)
   {
@@ -29,8 +26,7 @@ memcpy(void* dst, const void* src, size_t n)
   }
 }
 
-int
-memcmp(const void* s1, const void* s2, size_t n)
+int memcmp(const void* s1, const void* s2, size_t n)
 {
   if (n != 0) {
     const unsigned char *p1 = s1, *p2 = s2;
@@ -43,8 +39,7 @@ memcmp(const void* s1, const void* s2, size_t n)
   return (0);
 }
 
-int
-strcmp(const char* s1, const char* s2)
+int strcmp(const char* s1, const char* s2)
 {
   while (*s1 == *s2++)
     if (*s1++ == 0)
