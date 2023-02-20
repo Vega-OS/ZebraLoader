@@ -62,7 +62,7 @@ limine-efi:
 limine-efi/gnuefi/crt0-efi-x86_64.o limine-efi/gnuefi/reloc_x86_64.o: limine-efi
 	$(MAKE) -C limine-efi/gnuefi ARCH=x86_64
 
-BOOTX64.EFI: hello.elf
+BOOTX64.EFI: zebra.elf
 	$(OBJCOPY) -O binary $< $@
 	mkdir -p boot/EFI/BOOT
 	cp BOOTX64.EFI boot/EFI/BOOT/BOOTX64.EFI
@@ -73,7 +73,7 @@ BOOTX64.EFI: hello.elf
 	mcopy -i $(OUTPUT_IMG) startup.nsh ::
 	mcopy -i $(OUTPUT_IMG) BOOTX64.EFI ::/EFI/BOOT/
 
-hello.elf: limine-efi/gnuefi/crt0-efi-x86_64.o limine-efi/gnuefi/reloc_x86_64.o $(OBJ)
+zebra.elf: limine-efi/gnuefi/crt0-efi-x86_64.o limine-efi/gnuefi/reloc_x86_64.o $(OBJ)
 	$(LD) $^ $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
 
 -include $(HEADER_DEPS)
@@ -90,7 +90,7 @@ run: all ovmf
 
 .PHONY: clean
 clean:
-	rm -rf BOOTX64.EFI hello.elf $(OBJ) $(HEADER_DEPS)
+	rm -rf BOOTX64.EFI zebra.elf $(OBJ) $(HEADER_DEPS)
 
 .PHONY: distclean
 distclean: clean
