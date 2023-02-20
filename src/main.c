@@ -1,3 +1,8 @@
+/*
+ *  @description: Bootloader entrypoint.
+ *  @author: Ian Marco Moffett.
+ */
+
 #include <efi.h>
 #include <printf.h>
 

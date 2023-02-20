@@ -1,3 +1,8 @@
+/*
+ *  @description: String library.
+ *  @author: Quinn Stephens
+ */
+
 #include <string.h>
 
 size_t strlen(const char* str)

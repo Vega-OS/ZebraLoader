@@ -1,3 +1,8 @@
+/*
+ *  @description: Printf implementation.
+ *  @author: Quinn Stephens
+ */
+
 #include <efi.h>
 #include <string.h>
 #include <stdarg.h>
