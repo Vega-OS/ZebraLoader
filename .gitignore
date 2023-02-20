@@ -1,4 +1,6 @@
 *.EFI
 *.elf
 *.img
+*.o
+*.d
 /limine-efi
