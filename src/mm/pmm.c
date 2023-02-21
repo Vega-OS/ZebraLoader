@@ -10,6 +10,9 @@
 #define NEXT_MEMORY_DESCRIPTOR(ptr, size)  \
   ((EFI_MEMORY_DESCRIPTOR*) (((UINT8*) ptr) + size))
 
+static struct zebra_mmap mmap;
+static struct zebra_mmap_entry* free_mmap_entry = NULL;
+
 /*
  *  Gets the zebra memory map
  *  from the EFI memory map.
@@ -117,9 +120,23 @@ static struct zebra_mmap get_mmap(void)
   return get_zebra_mmap(efi_mmap, efi_mmap_size, efi_mmap_desc_size);
 }
 
+
+UINTN pmm_alloc_frame(void)
+{
+  if (free_mmap_entry->page_count == 0)
+  {
+    return 0;
+  }
+
+  uintptr_t alloc = free_mmap_entry->phys_base;
+  free_mmap_entry->phys_base += 4096;
+  --free_mmap_entry->page_count;
+  return alloc;
+}
+
 void pmm_init(void)
 {
-  struct zebra_mmap mmap = get_mmap();
+  mmap = get_mmap();
   static size_t n_bytes = 1;
   static size_t memory_size_mib = 0;
   
@@ -128,6 +145,12 @@ void pmm_init(void)
   {
     struct zebra_mmap_entry* entry = &mmap.entries[i]; 
     n_bytes += entry->page_count*4096;
+
+    if (entry->type == ZEBRA_MMAP_USABLE && free_mmap_entry == NULL)
+    {
+      /* Set free_mmap_entry to this memory that we can use */
+      free_mmap_entry = entry;
+    }
   }
   
   memory_size_mib = n_bytes/1048576;    /* 1 MiB => 1048576 bytes */

@@ -30,5 +30,6 @@ struct zebra_mmap
 };
 
 void pmm_init(void);
+UINTN pmm_alloc_frame(void);
 
 #endif
