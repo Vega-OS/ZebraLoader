@@ -61,7 +61,7 @@ override HEADER_DEPS := $(CFILES:.c=.d)
 all: BOOTX64.EFI
 
 limine-efi:
-	git clone https://github.com/limine-bootloader/limine-efi.git
+	- git clone https://github.com/limine-bootloader/limine-efi.git
 
 limine-efi/gnuefi/crt0-efi-x86_64.o limine-efi/gnuefi/reloc_x86_64.o: limine-efi
 	$(MAKE) -C limine-efi/gnuefi ARCH=x86_64
