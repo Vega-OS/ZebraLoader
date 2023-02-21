@@ -4,3 +4,6 @@ The ZebraLoader is a lightweight bootloader that is designed to facilitate the l
 
 ## Screenshot
 ![screenshot](.github/screenshot.png)
+
+## Note
+Kernels must be linked at address 0xC0FFF000
