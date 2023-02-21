@@ -6,9 +6,11 @@
 #include <efi.h>
 #include <printf.h>
 #include <menu.h>
+#include <loader.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <dev/gop.h>
+#include <dev/disk.h>
 
 EFI_BOOT_SERVICES* BS;
 EFI_RUNTIME_SERVICES* RT;
@@ -16,7 +18,6 @@ EFI_SYSTEM_TABLE* ST;
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 {
-  (void)ImageHandle;
   printf_init(SystemTable);
   clear_screen();
 
@@ -29,7 +30,10 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
   vmm_init();
 
   gop_init();
+  disk_init(ImageHandle);
+
   menu_start();
+  load_kernel(ImageHandle);
 
   for (;;);
 }

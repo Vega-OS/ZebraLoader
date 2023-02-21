@@ -4,9 +4,9 @@
  */
 
 #include <menu.h>
-#include <dev/gop.h>
 #include <font.h>
 #include <string.h>
+#include <dev/gop.h>
 
 #define MENU_HEIGHT 230
 #define MENU_WIDTH  400
@@ -61,7 +61,7 @@ static void putch(UINT32 x, UINT32 y, char c, UINT32 fg, UINT32 bg)
 static void putstr(const char* str, UINT32 x, UINT32 y,
                    UINT32 fg, UINT32 bg)
 {
-  for (size_t i = 0; i < strlen(str); ++i)
+  for (UINTN i = 0; i < strlen(str); ++i)
   {
     putch(x, y, str[i], fg, bg);
     x += FONT_WIDTH;
@@ -76,7 +76,7 @@ static uintptr_t get_text_x(const char* str, UINT32 menu_start_x)
 
 static void draw_horizontal_line(UINT32 y, UINT32 menu_start_x)
 {
-  for (size_t x = menu_start_x; x < menu_start_x+MENU_WIDTH; ++x)
+  for (UINTN x = menu_start_x; x < menu_start_x+MENU_WIDTH; ++x)
   {
     fb[gop_get_index(x, y)] = MENU_LINE_COLOR;
   }
@@ -84,7 +84,7 @@ static void draw_horizontal_line(UINT32 y, UINT32 menu_start_x)
 
 static void draw_vertical_line(UINT32 x, UINT32 menu_start_y)
 {
-  for (size_t y = menu_start_y; y < menu_start_y+MENU_HEIGHT; ++y)
+  for (UINTN y = menu_start_y; y < menu_start_y+MENU_HEIGHT; ++y)
   {
     fb[gop_get_index(x, y)] = MENU_LINE_COLOR;
   }
@@ -128,7 +128,7 @@ static void draw_menu_box(menu_entry_t selected_entry)
   title_start_x = get_text_x(MENU_HELP, menu_start_x);
   putstr(MENU_HELP, title_start_x, title_start_y, MENU_HELP_COLOR, MENU_BG); 
 
-  for (size_t i = 0; i < MENU_TOP; ++i)
+  for (UINTN i = 0; i < MENU_TOP; ++i)
   {
     option_start_x = get_text_x(menu_entry_strtab[i], menu_start_x);
 
@@ -157,6 +157,13 @@ static void menu_move_down(void)
     ++current_entry;
     draw_menu_box(current_entry);
   }
+}
+
+
+void menu_stop(void)
+{
+  memset(fb, 0, gop_get_pitch()*gop_get_height());
+  gop_swap_buffers();
 }
 
 void menu_start(void)
@@ -210,9 +217,15 @@ void menu_start(void)
                             0, 0, NULL);
 
           __asm__ __volatile__("cli; hlt");
+          break;
+        case MENU_BOOT:
+          is_looping = 0;
+          break;
         default:
           break;
       }
     }
   }
+    
+  menu_stop();
 }
