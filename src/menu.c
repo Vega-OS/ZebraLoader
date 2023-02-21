@@ -36,7 +36,8 @@ typedef enum
   MENU_TOP,         /* Max menu_entry_strtab entries */
 } menu_entry_t;
 
-const char* const menu_entry_strtab[] = {
+static menu_entry_t current_entry = MENU_BOOT;
+static const char* const menu_entry_strtab[] = {
   "Boot",
   "Shutdown"
 };
@@ -107,12 +108,28 @@ static void draw_menu_box(menu_entry_t selected_entry)
   gop_swap_buffers();
 }
 
+static void menu_move_up(void)
+{
+  if (current_entry > 0)
+  {
+    --current_entry;
+    draw_menu_box(current_entry);
+  }
+}
+
+static void menu_move_down(void)
+{
+  if (current_entry < MENU_TOP-1)
+  {
+    ++current_entry;
+    draw_menu_box(current_entry);
+  }
+}
+
 void menu_start(void)
 {
   fb = gop_get_addr();
   draw_menu_box(MENU_BOOT);
-
-  menu_entry_t current_entry = MENU_BOOT; 
   EFI_INPUT_KEY key;
 
   while (1)
@@ -129,19 +146,21 @@ void menu_start(void)
     switch (key.ScanCode)
     {
       case SCAN_UP:
-        if (current_entry > 0)
-        {
-          --current_entry;
-          draw_menu_box(current_entry);
-        }
-        break;
+        menu_move_up();
+        continue;
       case SCAN_DOWN:
-        if (current_entry < MENU_TOP-1)
-        {
-          ++current_entry;
-          draw_menu_box(current_entry);
-        }
-        break;
+        menu_move_down();
+        continue;
+    }
+    
+    /* Vim-like keys */
+    if (key.UnicodeChar == L'j')
+    {
+      menu_move_down();
+    }
+    else if (key.UnicodeChar == L'k')
+    {
+      menu_move_up();
     }
   }
 }
