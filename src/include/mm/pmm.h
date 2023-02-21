@@ -20,16 +20,17 @@ struct zebra_mmap_entry
   zebra_memtype_t type;
   UINTN phys_base;
   UINTN page_count;
-  UINTN key;
 };
 
 struct zebra_mmap
 {
   struct zebra_mmap_entry* entries;
   UINTN entry_count;
+  UINTN key;
 };
 
 void pmm_init(void);
 UINTN pmm_alloc_frame(void);
+struct zebra_mmap pmm_get_mmap(void);
 
 #endif
