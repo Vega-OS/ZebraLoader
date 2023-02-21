@@ -30,12 +30,15 @@ void gop_swap_buffers(void)
   }
 }
 
-
 UINT32 gop_get_width(void)
 {
   return gop->Mode->Info->HorizontalResolution;
 }
 
+UINT32 gop_get_pitch(void)
+{
+  return pitch;
+}
 
 UINT32 gop_get_height(void)
 {

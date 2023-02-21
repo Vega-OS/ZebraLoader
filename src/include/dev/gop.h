@@ -41,4 +41,10 @@ UINT32 gop_get_width(void);
 
 UINT32 gop_get_height(void);
 
+/*
+ *  Returns framebuffer pitch.
+ */
+
+UINT32 gop_get_pitch(void);
+
 #endif
