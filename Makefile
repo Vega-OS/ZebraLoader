@@ -16,6 +16,8 @@ LDFLAGS ?=
 
 OUTPUT_IMG = Zebra.img
 KERNEL_ELF = vega-kernel
+C_COMPILER = cross/bin/x86_64-elf-gcc
+LD_PATH = cross/bin/x86_64-elf-ld
 
 override INTERNALLDFLAGS :=                \
     -Tlimine-efi/gnuefi/elf_x86_64_efi.lds \
@@ -77,11 +79,11 @@ BOOTX64.EFI: zebra.elf
 	mcopy -i $(OUTPUT_IMG) BOOTX64.EFI ::/EFI/BOOT/
 
 zebra.elf: limine-efi/gnuefi/crt0-efi-x86_64.o limine-efi/gnuefi/reloc_x86_64.o $(OBJ)
-	$(LD) $^ $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
+	$(LD_PATH) $^ $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
 
 -include $(HEADER_DEPS)
 %.o: %.c limine-efi
-	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o $@
+	$(C_COMPILER) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o $@
 
 ovmf:
 	mkdir -p ovmf
