@@ -132,7 +132,8 @@ void menu_start(void)
   draw_menu_box(MENU_BOOT);
   EFI_INPUT_KEY key;
 
-  while (1)
+  UINT8 is_looping = 1; 
+  while (is_looping)
   {
     EFI_STATUS s = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, 
                                      ST->ConIn, &key);
@@ -142,7 +143,8 @@ void menu_start(void)
       uefi_call_wrapper(BS->Stall, 1, 1000);
       continue;
     }
-
+    
+    /* NOTE: Enter is handled at the bottom of this loop */
     switch (key.ScanCode)
     {
       case SCAN_UP:
@@ -157,10 +159,27 @@ void menu_start(void)
     if (key.UnicodeChar == L'j')
     {
       menu_move_down();
+      continue;
     }
     else if (key.UnicodeChar == L'k')
     {
       menu_move_up();
+      continue;
+    }
+  
+    /* Assuming we pressed ENTER */
+    if (key.UnicodeChar == '\r')
+    {
+      switch (current_entry)
+      {
+        case MENU_SHUTDOWN:
+          uefi_call_wrapper(RT->ResetSystem, 4, EfiResetShutdown,
+                            0, 0, NULL);
+
+          __asm__ __volatile__("cli; hlt");
+        default:
+          break;
+      }
     }
   }
 }
