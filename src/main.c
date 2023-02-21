@@ -5,6 +5,7 @@
 
 #include <efi.h>
 #include <printf.h>
+#include <mm/pmm.h>
 
 EFI_BOOT_SERVICES* BS;
 EFI_SYSTEM_TABLE* ST;
@@ -23,6 +24,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
   {
     uefi_call_wrapper(BS->Stall, 1, 1000);
   }
+
+  clear_screen();
+  pmm_init();
 
   for (;;);
 }
