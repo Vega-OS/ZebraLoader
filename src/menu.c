@@ -14,7 +14,10 @@
 #define MENU_FG_SEL 0xF88379
 #define MENU_FG     0x880808
 #define MENU_HELP "UP/DOWN to navigate, ENTER to select"
+#define MENU_TITLE "ZebraLoader by Ian Moffett"
 #define MENU_HELP_COLOR 0x87CEEB
+#define MENU_TITLE_COLOR 0xF9F6EE
+#define MENU_LINE_COLOR  0x71797E
 
 static UINT32* fb = NULL;
 
@@ -65,6 +68,28 @@ static void putstr(const char* str, UINT32 x, UINT32 y,
   }
 }
 
+static uintptr_t get_text_x(const char* str, UINT32 menu_start_x)
+{
+  UINT32 text_width = strlen(str)*FONT_WIDTH;
+  return menu_start_x+(MENU_WIDTH-text_width)/2;
+}
+
+static void draw_horizontal_line(UINT32 y, UINT32 menu_start_x)
+{
+  for (size_t x = menu_start_x; x < menu_start_x+MENU_WIDTH; ++x)
+  {
+    fb[gop_get_index(x, y)] = MENU_LINE_COLOR;
+  }
+}
+
+static void draw_vertical_line(UINT32 x, UINT32 menu_start_y)
+{
+  for (size_t y = menu_start_y; y < menu_start_y+MENU_HEIGHT; ++y)
+  {
+    fb[gop_get_index(x, y)] = MENU_LINE_COLOR;
+  }
+}
+
 static void draw_menu_box(menu_entry_t selected_entry)
 {
   UINT32 fb_height = gop_get_height();
@@ -81,23 +106,31 @@ static void draw_menu_box(menu_entry_t selected_entry)
     }
   }
 
-  
-  UINT32 text_width = strlen(MENU_HELP)*FONT_WIDTH;
-  
-  /* Start x and y positions for the HELP message */
-  UINT32 help_start_y = menu_start_y+FONT_HEIGHT;
-  UINT32 help_start_x = menu_start_x+(MENU_WIDTH-text_width)/2;
-  
   /* Start x and y positions for each option */
   UINT32 option_start_y = menu_start_y+(MENU_HEIGHT-FONT_HEIGHT)/2;
   UINT32 option_start_x;
 
-  putstr(MENU_HELP, help_start_x, help_start_y, MENU_HELP_COLOR, MENU_BG);
+  UINT32 title_start_x = get_text_x(MENU_TITLE, menu_start_x);
+  UINT32 title_start_y = menu_start_y+FONT_HEIGHT;
+  putstr(MENU_TITLE, title_start_x, title_start_y, MENU_TITLE_COLOR, MENU_BG);
+  
+  
+  /* Draw horizontal line */
+  title_start_y += FONT_HEIGHT+4;
+  draw_horizontal_line(title_start_y, menu_start_x);
+
+  /* Draw vertical lines */
+  draw_vertical_line(menu_start_x, menu_start_y);
+  draw_vertical_line(menu_start_x + MENU_WIDTH, menu_start_y);
+  
+  /* Draw HELP menu */
+  title_start_y += FONT_HEIGHT+5;
+  title_start_x = get_text_x(MENU_HELP, menu_start_x);
+  putstr(MENU_HELP, title_start_x, title_start_y, MENU_HELP_COLOR, MENU_BG); 
 
   for (size_t i = 0; i < MENU_TOP; ++i)
   {
-    text_width = strlen(menu_entry_strtab[i])*FONT_WIDTH; 
-    option_start_x = menu_start_x+(MENU_WIDTH-text_width)/2;
+    option_start_x = get_text_x(menu_entry_strtab[i], menu_start_x);
 
     UINT32 fg = (selected_entry == i) ? MENU_FG_SEL : MENU_FG;
     putstr(menu_entry_strtab[i], option_start_x, option_start_y, fg, MENU_BG);
