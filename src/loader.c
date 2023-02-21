@@ -68,8 +68,6 @@ __attribute__((noreturn)) void load_kernel(EFI_HANDLE image_handle)
       size = phdr->p_filesz;
       file->SetPosition(file, phdr->p_offset);
       file->Read(file, &size, (void*)segment);
-
-      printf("%x\n", segment);
     }
 
     phdr = (Elf64_Phdr*)((UINTN)phdr + eh.e_phentsize);
