@@ -86,7 +86,7 @@ ovmf:
 
 .PHONY: run
 run: all ovmf
-	qemu-system-x86_64 -net none -M q35 -drive file=$(OUTPUT_IMG) -bios ovmf/OVMF.fd -m 256M
+	qemu-system-x86_64 --enable-kvm -M q35 -drive file=$(OUTPUT_IMG) -bios ovmf/OVMF.fd -m 256M
 
 .PHONY: clean
 clean:
