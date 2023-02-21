@@ -10,6 +10,7 @@
 
 extern EFI_BOOT_SERVICES* BS;
 extern EFI_SYSTEM_TABLE* ST;
+extern EFI_RUNTIME_SERVICES* RT;
 
 #define halt()                        \
   printf("-- System halted --\n");    \
