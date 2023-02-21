@@ -47,4 +47,12 @@ UINT32 gop_get_height(void);
 
 UINT32 gop_get_pitch(void);
 
+/*
+ *  Frees the backbuffer and
+ *  causes gop_get_addr to return
+ *  the address of the front buffer.
+ */
+
+void gop_free_backbuffer(void);
+
 #endif
