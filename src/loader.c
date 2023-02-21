@@ -12,6 +12,11 @@
 
 #define HIGHER_HALF 0xC0000000
 
+/*
+ *  Returns 1 if the ELF header
+ *  is valid, otherwise 0.
+ */
+
 static UINT8 is_valid_elf(Elf64_Ehdr eh)
 {
   return eh.e_ident[EI_CLASS] == ELFCLASS64
@@ -24,16 +29,16 @@ __attribute__((noreturn)) void load_kernel(EFI_HANDLE image_handle)
 {
   /* __KERNEL_ELF is set during compile time (as a flag) */
   EFI_FILE* file = disk_get_file(__KERNEL_ELF);
+
   if (file == NULL)
   {
     printf("Could not find kernel!\n");
     printf("Please check how you configured ZebraLoader.\n");
     halt();
   }
-
-  Elf64_Ehdr eh;
-  
+ 
   /* Read in the ELF header */
+  Elf64_Ehdr eh;
   UINTN size = sizeof(Elf64_Ehdr);
   file->Read(file, &size, &eh);
 
@@ -60,10 +65,10 @@ __attribute__((noreturn)) void load_kernel(EFI_HANDLE image_handle)
     if (phdr->p_type == PT_LOAD)
     {
       UINTN page_count = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
-      Elf64_Addr segment = phdr->p_paddr;
-       
+      Elf64_Addr segment = phdr->p_paddr; 
+
       vmm_map_pages(vmm_get_kernel_pml4(), segment, segment-HIGHER_HALF,
-                   PTE_PRESENT | PTE_WRITABLE, page_count);
+                    PTE_PRESENT | PTE_WRITABLE, page_count);
       
       size = phdr->p_filesz;
       file->SetPosition(file, phdr->p_offset);
