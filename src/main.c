@@ -5,9 +5,13 @@
 
 #include <efi.h>
 #include <printf.h>
+#include <menu.h>
 #include <mm/pmm.h>
+#include <mm/vmm.h>
+#include <dev/gop.h>
 
 EFI_BOOT_SERVICES* BS;
+EFI_RUNTIME_SERVICES* RT;
 EFI_SYSTEM_TABLE* ST;
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
@@ -18,15 +22,14 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 
   ST = SystemTable;
   BS = ST->BootServices;
-  
-  printf("Press any key to boot\n");
-  while (uefi_call_wrapper(BS->CheckEvent, 1, ST->ConIn->WaitForKey))
-  {
-    uefi_call_wrapper(BS->Stall, 1, 1000);
-  }
+  RT = ST->RuntimeServices; 
 
   clear_screen();
   pmm_init();
+  vmm_init();
+
+  gop_init();
+  menu_start();
 
   for (;;);
 }
