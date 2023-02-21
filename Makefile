@@ -15,6 +15,7 @@ CFLAGS ?= -g -O2 -pipe -Wall -Wextra
 LDFLAGS ?=
 
 OUTPUT_IMG = Zebra.img
+KERNEL_ELF = vega-kernel
 
 override INTERNALLDFLAGS :=                \
     -Tlimine-efi/gnuefi/elf_x86_64_efi.lds \
@@ -47,7 +48,8 @@ override INTERNALCFLAGS :=  \
     -I.                     \
     -Ilimine-efi/inc        \
     -Ilimine-efi/inc/x86_64 \
-		-Isrc/include/
+		-Isrc/include/					\
+		-D __KERNEL_ELF='L"$(KERNEL_ELF)"'
 
 override CFILES := $(shell find ./src -type f -name '*.c')
 override OBJ := $(CFILES:.c=.o)
@@ -71,6 +73,7 @@ BOOTX64.EFI: zebra.elf
 	mmd -i $(OUTPUT_IMG) ::/EFI
 	mmd -i $(OUTPUT_IMG) ::/EFI/BOOT
 	mcopy -i $(OUTPUT_IMG) startup.nsh ::
+	mcopy -i $(OUTPUT_IMG) $(KERNEL_ELF) ::
 	mcopy -i $(OUTPUT_IMG) BOOTX64.EFI ::/EFI/BOOT/
 
 zebra.elf: limine-efi/gnuefi/crt0-efi-x86_64.o limine-efi/gnuefi/reloc_x86_64.o $(OBJ)
@@ -86,7 +89,8 @@ ovmf:
 
 .PHONY: run
 run: all ovmf
-	qemu-system-x86_64 --enable-kvm -M q35 -drive file=$(OUTPUT_IMG) -bios ovmf/OVMF.fd -m 256M
+	@#qemu-system-x86_64 --enable-kvm -M q35 -drive file=$(OUTPUT_IMG) -bios ovmf/OVMF.fd -m 256M
+	qemu-system-x86_64 -d int -monitor stdio -M q35 -drive file=$(OUTPUT_IMG) -bios ovmf/OVMF.fd -m 256M
 
 .PHONY: clean
 clean:
