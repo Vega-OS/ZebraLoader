@@ -122,7 +122,8 @@ void pmm_init(void)
   struct zebra_mmap mmap = get_mmap();
   static size_t n_bytes = 1;
   static size_t memory_size_mib = 0;
-
+  
+  /* Compute how much memory there is */
   for (size_t i = 0; i < mmap.entry_count; ++i)
   {
     struct zebra_mmap_entry* entry = &mmap.entries[i]; 
