@@ -117,7 +117,10 @@ static struct zebra_mmap get_mmap(void)
     halt();
   }
   
-  return get_zebra_mmap(efi_mmap, efi_mmap_size, efi_mmap_desc_size);
+  struct zebra_mmap mmap;
+  mmap = get_zebra_mmap(efi_mmap, efi_mmap_size, efi_mmap_desc_size);
+  mmap.key = efi_mmap_key;
+  return mmap;
 }
 
 
@@ -132,6 +135,12 @@ UINTN pmm_alloc_frame(void)
   free_mmap_entry->phys_base += 4096;
   --free_mmap_entry->page_count;
   return alloc;
+}
+
+
+struct zebra_mmap pmm_get_mmap(void)
+{
+  return mmap;
 }
 
 void pmm_init(void)
