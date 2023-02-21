@@ -22,6 +22,12 @@ UINT32* gop_get_addr(void)
   return backbuffer_addr;
 }
 
+void gop_free_backbuffer(void)
+{
+  uefi_call_wrapper(BS->FreePool, 1, backbuffer_addr);
+  backbuffer_addr = framebuffer_addr;
+}
+
 void gop_swap_buffers(void)
 {
   for (UINT32 i = 0; i < gop_get_height()*pitch; ++i)

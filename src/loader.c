@@ -5,12 +5,39 @@
 
 #include <loader.h>
 #include <printf.h>
+#include <zebra_proto.h>
 #include <elf.h>
 #include <dev/disk.h>
+#include <dev/gop.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
 
 #define HIGHER_HALF 0xC0000000
+
+static void shutdown(void)
+{
+  
+  uefi_call_wrapper(RT->ResetSystem, 4, EfiResetShutdown,
+                    0, 0, NULL);
+  __asm__ __volatile__("cli; hlt");
+}
+
+/*
+ *  Initializes the Zebra protocol.
+ */
+
+static struct zebra_info init_proto(void)
+{
+  struct zebra_info info;
+  info.mmap = pmm_get_mmap();
+  info.shutdown = shutdown;
+
+  info.fbinfo.base_addr = (UINTN)gop_get_addr();
+  info.fbinfo.width = gop_get_width();
+  info.fbinfo.height = gop_get_height();
+  info.fbinfo.pitch = gop_get_pitch();
+  return info;
+}
 
 /*
  *  Returns 1 if the ELF header
@@ -81,11 +108,14 @@ __attribute__((noreturn)) void load_kernel(EFI_HANDLE image_handle)
   /* We don't need UEFI boot services anymore */
   struct zebra_mmap mmap = pmm_get_mmap();  
   uefi_call_wrapper(BS->ExitBootServices, 2, image_handle, mmap.key); 
+
+  /* We don't need the backbuffer anymore */
+  gop_free_backbuffer();
   
   /* Jump to the kernel entrypoint */
-  int (*kentry)(void);
-  kentry = ((__attribute__((sysv_abi)) int (*)(void)) eh.e_entry);
-  kentry(); 
+  int (*kentry)(struct zebra_info);
+  kentry = ((__attribute__((sysv_abi)) int (*)(struct zebra_info))eh.e_entry);
+  kentry(init_proto());
 
   __builtin_unreachable();
 }
