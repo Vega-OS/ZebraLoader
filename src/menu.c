@@ -125,8 +125,10 @@ static void draw_background(void)
   { 
     for (int x = 0; x < gop_get_width(); ++x)
     {
-      UINT32 bx = x % header->width;
-      UINT32 by = y % header->height;
+      /* These 2 lines scale the image to the size of the framebuffer */
+      UINT32 bx = (x * header->width) / gop_get_width();
+      UINT32 by = (y * header->height) / gop_get_height();
+
       UINT32 b = image[(by * header->width + bx) * 3];
       UINT32 g = image[(by * header->width + bx) * 3 + 1];
       UINT32 r = image[(by * header->width + bx) * 3 + 2];
