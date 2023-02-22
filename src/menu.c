@@ -8,6 +8,14 @@
 #include <dev/disk.h>
 #include <dev/gop.h>
 
+#define BLEND_GET_ALPHA(color) ((color >> 24) & 0x000000FF)
+#define BLEND_GET_RED(color)   ((color >> 16)   & 0x000000FF)
+#define BLEND_GET_GREEN(color) ((color >> 8)  & 0x000000FF)
+#define BLEND_GET_BLUE(color)  ((color >> 0)   & 0X000000FF)
+
+#define MENU_HEIGHT 200
+#define MENU_WIDTH 400
+
 /*
  *  Returns a pointer to BMP
  *  file data.
@@ -56,6 +64,36 @@ static void* get_background_bmp(void)
   return ret;
 }
 
+/*
+ *  Blends `color` with a black pixel.
+ */
+
+UINT32 blend_black(UINT32 color) {
+    UINT32 alpha1 = BLEND_GET_BLUE(color);
+    UINT32 red1 = BLEND_GET_RED(color);
+    UINT32 green1 = BLEND_GET_GREEN(color);
+    UINT32 blue1 = BLEND_GET_BLUE(color);
+
+    UINT32 alpha2 = BLEND_GET_ALPHA(0x000000);
+    UINT32 red2 = BLEND_GET_RED(0x000000);
+    UINT32 green2 = BLEND_GET_GREEN(0x00000);
+    UINT32 blue2 = BLEND_GET_BLUE(0x00000);
+
+    const float BLEND_AMT = 0.2;
+
+    UINT32 r = (UINT32)((alpha1 * BLEND_AMT / 255) * red1);
+    UINT32 g = (UINT32)((alpha1 * BLEND_AMT / 255) * green1);
+    UINT32 b = (UINT32)((alpha1 * BLEND_AMT / 255) * blue1);
+
+    r += (((255 - alpha1) * BLEND_AMT / 255) * (alpha2 * BLEND_AMT / 255)) * red2;
+    g += (((255 - alpha1) * BLEND_AMT / 255) * (alpha2 * BLEND_AMT / 255)) * green2;
+    b += (((255 - alpha1) * BLEND_AMT / 255) * (alpha2 * BLEND_AMT / 255)) * blue2;
+
+    UINT32 new_alpha = (UINT32)(alpha1 + ((255 - alpha1) * BLEND_AMT / 255) * alpha2);
+    UINT32 blend_res = (new_alpha << 24) |  (r << 16) | (g << 8) | (b << 0);
+    return blend_res;
+}
+
 static void draw_background(void)
 {
   void* bmp = get_background_bmp();
@@ -100,7 +138,30 @@ static void draw_background(void)
   gop_swap_buffers();
 }
 
+static void draw_menu(void)
+{
+  UINT32 fb_height = gop_get_height();
+  UINT32 fb_width = gop_get_width();
+
+  UINT32 menu_start_x = (fb_width - MENU_WIDTH) / 2;
+  UINT32 menu_start_y = (fb_height - MENU_HEIGHT) / 2;
+
+  UINT32* fb = gop_get_addr();
+
+  for (UINTN y = menu_start_y; y < menu_start_y+MENU_HEIGHT; ++y)
+  {
+    for (UINTN x = menu_start_x; x < menu_start_x+MENU_WIDTH; ++x)
+    {
+      UINT32 old_pixel = fb[gop_get_index(x, y)];
+      fb[gop_get_index(x, y)] = blend_black(old_pixel);
+    }
+  }
+
+  gop_swap_buffers();
+}
+
 void menu_init(void)
 {
   draw_background();
+  draw_menu();
 }

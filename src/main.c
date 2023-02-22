@@ -13,5 +13,5 @@ EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE* st)
   gop_init();
   menu_init();
 
-  halt();
+  __asm("cli; hlt");
 }
