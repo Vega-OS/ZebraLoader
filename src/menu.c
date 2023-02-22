@@ -28,12 +28,14 @@ typedef enum
 {
   MENU_BOOT,
   MENU_REBOOT,
+  MENU_SHUTDOWN,
   MENU_TOP,       /* Max menu entry + 1 */
 } menu_entry_t;
 
 static const char* menu_entry_strtab[MENU_TOP] = {
   "Boot",
-  "Reboot"
+  "Reboot",
+  "Shutdown"
 };
 
 static menu_entry_t selected_entry = MENU_BOOT;
@@ -359,9 +361,17 @@ static void select_entry(void)
                         0,
                         NULL
       );
+      
+      for (;;);
+    case MENU_SHUTDOWN:
+      uefi_call_wrapper(RT->ResetSystem, 4,
+                        EfiResetShutdown,
+                        0,
+                        0,
+                        NULL
+      );
 
-      __asm("cli; hlt");
-      break;
+      for (;;);
   }
 }
 
