@@ -19,7 +19,8 @@
 #define MENU_WIDTH  400
 #define MENU_TITLE "ZebraLoader by Ian Moffett"
 #define MENU_HELP  "UP/DOWN to navigate, RIGHT to select"
-#define MENU_ENTRY_SEL_COLOR 0x0096FF
+#define MENU_ENTRY_SEL_FG 0x1B1212
+#define MENU_ENTRY_SEL_BG 0xA9A9A9
 #define MENU_ENTRY_COLOR 0xA9A9A9
 #define MENU_TITLE_COLOR 0xFCF5E5
 #define MENU_LINE_COLOR 0x71797E
@@ -94,10 +95,12 @@ static void* get_background_bmp(void)
  *  @x: X position.
  *  @y: Y position.
  *  @fg: Foreground.
- *  @bg: Background.
+ *  @bg: Background color.
+ *  @use_bg: 1 to use a background color.
  */
 
-static void putch(UINT32 x, UINT32 y, char c, UINT32 fg)
+static void putch(UINT32 x, UINT32 y, char c, UINT32 fg, UINT32 bg,
+                  UINT32 use_bg)
 {
   UINT32* fb_addr = gop_get_addr();
 
@@ -108,7 +111,11 @@ static void putch(UINT32 x, UINT32 y, char c, UINT32 fg)
     {
       UINT16 col = (DEFAULT_FONT_DATA[(UINTN)c * FONT_WIDTH + cx] >> cy) & 1;
 
-      if (col)
+      if (use_bg)
+      {
+        fb_addr[gop_get_index(x + cx, y + cy)] = col ? fg : bg;
+      }
+      else if (col)
       {
         fb_addr[gop_get_index(x + cx, y + cy)] = fg;
       }
@@ -121,11 +128,12 @@ static void putch(UINT32 x, UINT32 y, char c, UINT32 fg)
  *  with strings.
  */
 
-static void putstr(UINT32 x, UINT32 y, const char* str, UINT32 fg)
+static void putstr(UINT32 x, UINT32 y, const char* str, UINT32 fg, UINT32 bg,
+                   UINT32 use_bg)
 {
   for (UINTN i = 0; i < strlen(str); ++i)
   {
-    putch(x, y, str[i], fg);
+    putch(x, y, str[i], fg, bg, use_bg);
     x += FONT_WIDTH;
   }
 }
@@ -283,13 +291,17 @@ static void draw_menu(menu_entry_t selected_entry)
   UINTN title_y = menu_start_y+5;
   putstr(get_str_x(MENU_TITLE, menu_start_x), title_y,
          MENU_TITLE,
-         MENU_TITLE_COLOR
+         MENU_TITLE_COLOR,
+         0,
+         0
   );
   
   title_y += FONT_HEIGHT;
   putstr(get_str_x(MENU_HELP, menu_start_x), title_y,
          MENU_HELP,
-         MENU_TITLE_COLOR
+         MENU_TITLE_COLOR,
+         0,
+         0
   );
   
   /*
@@ -301,12 +313,14 @@ static void draw_menu(menu_entry_t selected_entry)
   UINT32 y = title_y+(FONT_HEIGHT*2);
   for (UINTN i = 0; i < MENU_TOP; ++i)
   {
-    UINT32 color = selected_entry == i ? MENU_ENTRY_SEL_COLOR
+    UINT32 color = selected_entry == i ? MENU_ENTRY_SEL_FG
                                        : MENU_ENTRY_COLOR;
 
     putstr(get_str_x(menu_entry_strtab[i], menu_start_x), y,
            menu_entry_strtab[i],
-           color
+           color,
+           MENU_ENTRY_SEL_BG,       /* Only used if selected_entry == i */
+           selected_entry == i
     );
 
     y += FONT_HEIGHT;
