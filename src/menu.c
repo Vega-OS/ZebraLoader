@@ -18,6 +18,7 @@
 #define MENU_HEIGHT 325
 #define MENU_WIDTH  400
 #define MENU_TITLE "ZebraLoader by Ian Moffett"
+#define MENU_HELP  "UP/DOWN to navigate, RIGHT to select"
 #define MENU_ENTRY_SEL_COLOR 0x0096FF
 #define MENU_ENTRY_COLOR 0xA9A9A9
 #define MENU_TITLE_COLOR 0xFCF5E5
@@ -283,8 +284,19 @@ static void draw_menu(menu_entry_t selected_entry)
          MENU_TITLE_COLOR
   );
   
-  /* Draw entries */
-  UINT32 y = menu_start_y+(FONT_HEIGHT*2);
+  title_y += FONT_HEIGHT;
+  putstr(get_str_x(MENU_HELP, menu_start_x), title_y,
+         MENU_HELP,
+         MENU_TITLE_COLOR
+  );
+  
+  /*
+   * @y: Initial y for the menu entry.
+   *
+   *     FONT_HEIGHT*2 added to title_y
+   *     so we don't write over the title.
+   */
+  UINT32 y = title_y+(FONT_HEIGHT*2);
   for (UINTN i = 0; i < MENU_TOP; ++i)
   {
     UINT32 color = selected_entry == i ? MENU_ENTRY_SEL_COLOR
@@ -336,6 +348,23 @@ static void move_down(void)
   refresh();
 }
 
+static void select_entry(void)
+{
+  switch (selected_entry)
+  {
+    case MENU_REBOOT:
+      uefi_call_wrapper(RT->ResetSystem, 4,
+                        EfiResetWarm,           /* Soft reboot */
+                        0,
+                        0,
+                        NULL
+      );
+
+      __asm("cli; hlt");
+      break;
+  }
+}
+
 void menu_init(void)
 {
   EFI_INPUT_KEY key;
@@ -363,6 +392,9 @@ void menu_init(void)
         break;
       case SCAN_DOWN:
         move_down();
+        break;
+      case SCAN_RIGHT:
+        select_entry();
         break;
     }
 
