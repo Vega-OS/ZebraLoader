@@ -365,5 +365,14 @@ void menu_init(void)
         move_down();
         break;
     }
+
+    if (key.UnicodeChar == L'j')
+    {
+      move_down();
+    }
+    else if (key.UnicodeChar == L'k')
+    {
+      move_up();
+    }
   }
 }
