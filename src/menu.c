@@ -16,10 +16,26 @@
 #define BLEND_GET_BLUE(color)  ((color >> 0)   & 0X000000FF)
 
 #define MENU_HEIGHT 325
-#define MENU_WIDTH 400
+#define MENU_WIDTH  400
 #define MENU_TITLE "ZebraLoader by Ian Moffett"
+#define MENU_ENTRY_SEL_COLOR 0x0096FF
+#define MENU_ENTRY_COLOR 0xA9A9A9
 #define MENU_TITLE_COLOR 0xFCF5E5
 #define MENU_LINE_COLOR 0x71797E
+
+typedef enum
+{
+  MENU_BOOT,
+  MENU_REBOOT,
+  MENU_TOP,       /* Max menu entry + 1 */
+} menu_entry_t;
+
+static const char* menu_entry_strtab[MENU_TOP] = {
+  "Boot",
+  "Reboot"
+};
+
+static menu_entry_t selected_entry = MENU_BOOT;
 
 /*
  *  Returns a pointer to BMP
@@ -184,7 +200,15 @@ static UINT32 draw_vertical_line(UINT32 x, UINT32 menu_start_y)
   }
 }
 
-static void draw_background(void)
+/*
+ *  @start_x: Start x position to draw image to.
+ *  @start_y: Start y position to draw the image to.
+ *  @end_x: X position to stop drawing image at.
+ *  @end_y: Y position to stop drawing image at.
+ */
+
+static void draw_background(UINT32 start_x, UINT32 start_y,
+                            UINT32 end_x, UINT32 end_y)
 {
   void* bmp = get_background_bmp();
 
@@ -202,17 +226,11 @@ static void draw_background(void)
 
   UINT8* image = (UINT8*)((UINTN)bmp + header->data_offset);
   UINT32* fb = gop_get_addr(); 
-  UINT32 i = 0; 
-  UINT32 start_x = 0;
+  UINT32 i = 0;
 
-  if (gop_get_width() > header->width)
-  {
-    start_x = (gop_get_width() - header->width) / 2;
-  }
-
-  for (int y = 0; y < gop_get_height(); ++y)
+  for (int y = start_y; y < end_y; ++y)
   { 
-    for (int x = 0; x < gop_get_width(); ++x)
+    for (int x = start_x; x < end_x; ++x)
     {
       /* These 2 lines scale the image to the size of the framebuffer */
       UINT32 bx = (x * header->width) / gop_get_width();
@@ -226,17 +244,27 @@ static void draw_background(void)
       fb[gop_get_index(x, gop_get_height()-y)] = rgb;
     }
   }
-
-  gop_swap_buffers();
 }
 
-static void draw_menu(void)
+static UINT32 get_menu_start_x(void)
+{
+  UINT32 fb_width = gop_get_width();
+  return (fb_width - MENU_WIDTH) / 2;
+}
+
+static UINT32 get_menu_start_y(void)
+{
+  UINT32 fb_height = gop_get_height();
+  return (fb_height - MENU_HEIGHT) / 2;
+}
+
+static void draw_menu(menu_entry_t selected_entry)
 {
   UINT32 fb_height = gop_get_height();
   UINT32 fb_width = gop_get_width();
 
-  UINT32 menu_start_x = (fb_width - MENU_WIDTH) / 2;
-  UINT32 menu_start_y = (fb_height - MENU_HEIGHT) / 2;
+  UINT32 menu_start_x = get_menu_start_x();
+  UINT32 menu_start_y = get_menu_start_y();
 
   UINT32* fb = gop_get_addr();
 
@@ -254,15 +282,88 @@ static void draw_menu(void)
          MENU_TITLE,
          MENU_TITLE_COLOR
   );
+  
+  /* Draw entries */
+  UINT32 y = menu_start_y+(FONT_HEIGHT*2);
+  for (UINTN i = 0; i < MENU_TOP; ++i)
+  {
+    UINT32 color = selected_entry == i ? MENU_ENTRY_SEL_COLOR
+                                       : MENU_ENTRY_COLOR;
+
+    putstr(get_str_x(menu_entry_strtab[i], menu_start_x), y,
+           menu_entry_strtab[i],
+           color
+    );
+
+    y += FONT_HEIGHT;
+  }
 
   draw_horizontal_line(menu_start_x, title_y+FONT_HEIGHT);
   draw_vertical_line(menu_start_x, menu_start_y);
   draw_vertical_line(menu_start_x + (MENU_WIDTH-1), menu_start_y);
+}
+
+static void refresh(void)
+{
+  UINT32 menu_x = get_menu_start_x();
+  UINT32 menu_y = get_menu_start_y();
+  draw_background(menu_x, menu_y,
+                  menu_x + MENU_WIDTH,
+                  menu_y + MENU_HEIGHT
+  );
+
+  draw_menu(selected_entry);
   gop_swap_buffers();
+}
+
+static void move_up(void)
+{
+  if (selected_entry > 0)
+  {
+    --selected_entry;
+  }
+  
+  refresh();
+}
+
+static void move_down(void)
+{
+  if (selected_entry < MENU_TOP-1)
+  {
+    ++selected_entry;
+  }
+
+  refresh();
 }
 
 void menu_init(void)
 {
-  draw_background();
-  draw_menu();
+  EFI_INPUT_KEY key;
+  EFI_STATUS status;
+  UINT8 is_looping = 1;
+
+  draw_background(0, 0, gop_get_width(), gop_get_height());
+  draw_menu(MENU_BOOT);
+  gop_swap_buffers();
+
+  while (is_looping)
+  {
+    status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &key);
+
+    if (status == EFI_NOT_READY)
+    {
+      uefi_call_wrapper(BS->Stall, 1, 1000);
+      continue;
+    }
+
+    switch (key.ScanCode)
+    {
+      case SCAN_UP:
+        move_up();
+        break;
+      case SCAN_DOWN:
+        move_down();
+        break;
+    }
+  }
 }
