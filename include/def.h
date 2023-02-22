@@ -9,7 +9,11 @@
 #include <efi.h>
 #include <efilib.h>
 
-#define __asm   __asm__ __volatile__
-#define halt()  __asm("cli; hlt")
+#define __asm       __asm__ __volatile__
+#define __packed    __attribute__((packed))
+
+#define halt()                            \
+  Print(L"-- System Halted --\n");        \
+  __asm("cli; hlt")
 
 #endif

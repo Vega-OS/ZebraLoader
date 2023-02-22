@@ -13,6 +13,13 @@ void gop_init(void);
 UINT32 gop_get_size(void);
 
 /*
+ *  Returns the index into the
+ *  framebuffer.
+ */
+
+UINT32 gop_get_index(UINT32 x, UINT32 y);
+
+/*
  *  Returns the width of the framebuffer.
  */
 

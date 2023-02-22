@@ -7,6 +7,7 @@
 
 static EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = NULL;
 static UINT32* backbuffer = NULL;
+static UINT32 pitch = 0;
 
 /*
  *  Returns GOP.
@@ -50,6 +51,11 @@ UINT32* gop_get_addr(void)
   return backbuffer;
 }
 
+UINT32 gop_get_index(UINT32 x, UINT32 y)
+{
+  return x + y * (pitch/4);
+}
+
 void gop_swap_buffers(void)
 {
   for (UINT32 i = 0; i < gop->Mode->FrameBufferSize/4; ++i)
@@ -80,4 +86,6 @@ void gop_init(void)
   {
     backbuffer[i] = 0;
   }
+
+  pitch = 4*gop->Mode->Info->PixelsPerScanLine;
 }
