@@ -5,4 +5,4 @@ initialize the system and load a kernel.
 
 ## Screenshot
 
-![Screenshot](.github/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/Vega-OS/ZebraLoader/main/.github/screenshot.png?)
