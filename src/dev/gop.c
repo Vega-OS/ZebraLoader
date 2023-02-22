@@ -64,6 +64,11 @@ void gop_swap_buffers(void)
   }
 }
 
+UINT32 gop_get_pitch(void)
+{
+  return pitch;
+}
+
 void gop_init(void)
 {
   EFI_STATUS status;
