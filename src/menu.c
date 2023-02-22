@@ -68,7 +68,8 @@ static void* get_background_bmp(void)
  *  Blends `color` with a black pixel.
  */
 
-UINT32 blend_black(UINT32 color) {
+UINT32 blend_black(UINT32 color)
+{
     UINT32 alpha1 = BLEND_GET_BLUE(color);
     UINT32 red1 = BLEND_GET_RED(color);
     UINT32 green1 = BLEND_GET_GREEN(color);
