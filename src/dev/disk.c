@@ -60,44 +60,31 @@ EFI_FILE* disk_get_file(CHAR16* path)
 
 EFI_STATUS disk_get_file_size(EFI_FILE* file, UINTN* size)
 {
-  EFI_STATUS status;
   EFI_FILE_INFO* file_info;
-  UINTN buffer_size = 0;
+  UINTN buffer_size = sizeof(EFI_FILE_INFO) + 1024;
+  EFI_STATUS status;
 
-  /* Get the buffer size for file info */
-  uefi_call_wrapper(file->GetInfo, 4,
-                    file,
-                    &gEfiFileInfoGuid,
-                    &buffer_size,
-                    NULL
+  file_info = AllocatePool(buffer_size);
 
-  );
-
-  if (status != EFI_BUFFER_TOO_SMALL)
+  if (file_info == NULL)
   {
-    return status;
+    return EFI_OUT_OF_RESOURCES;
   }
-  
-  status = uefi_call_wrapper(BS->AllocatePool, 3,
-                             EfiLoaderData,
-                             buffer_size,
-                             (void**)&file_info
+
+  status = uefi_call_wrapper(file->GetInfo, 4,
+                             file,
+                             &gEfiFileInfoGuid,
+                             &buffer_size,
+                             file_info
   );
 
   if (EFI_ERROR(status))
   {
     return status;
   }
-
-  /* Get the file info */
-  status = uefi_call_wrapper(file->GetInfo, 4,
-                             &gEfiFileInfoGuid,
-                             &buffer_size,
-                             (void*)file_info
-  );
-
+  
   *size = file_info->FileSize;
-  uefi_call_wrapper(BS->FreePool, 1, file_info);
+  FreePool(file_info);
   return EFI_SUCCESS;
 }
 
