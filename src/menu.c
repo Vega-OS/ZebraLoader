@@ -5,6 +5,8 @@
 
 #include <menu.h>
 #include <bmp.h>
+#include <font.h>
+#include <string.h>
 #include <dev/disk.h>
 #include <dev/gop.h>
 
@@ -13,8 +15,11 @@
 #define BLEND_GET_GREEN(color) ((color >> 8)  & 0x000000FF)
 #define BLEND_GET_BLUE(color)  ((color >> 0)   & 0X000000FF)
 
-#define MENU_HEIGHT 200
+#define MENU_HEIGHT 325
 #define MENU_WIDTH 400
+#define MENU_TITLE "ZebraLoader by Ian Moffett"
+#define MENU_TITLE_COLOR 0xFCF5E5
+#define MENU_LINE_COLOR 0x71797E
 
 /*
  *  Returns a pointer to BMP
@@ -65,6 +70,48 @@ static void* get_background_bmp(void)
 }
 
 /*
+ *  Places a character on the screen at (x,y).
+ *  
+ *  @x: X position.
+ *  @y: Y position.
+ *  @fg: Foreground.
+ *  @bg: Background.
+ */
+
+static void putch(UINT32 x, UINT32 y, char c, UINT32 fg)
+{
+  UINT32* fb_addr = gop_get_addr();
+
+  c -= 32;
+  for (UINT32 cx = 0; cx < FONT_WIDTH; ++cx) 
+  {
+    for (UINT32 cy = 0; cy < FONT_HEIGHT; ++cy) 
+    {
+      UINT16 col = (DEFAULT_FONT_DATA[(UINTN)c * FONT_WIDTH + cx] >> cy) & 1;
+
+      if (col)
+      {
+        fb_addr[gop_get_index(x + cx, y + cy)] = fg;
+      }
+    }
+  }
+}
+
+/*
+ *  Does the same thing as putch() but
+ *  with strings.
+ */
+
+static void putstr(UINT32 x, UINT32 y, const char* str, UINT32 fg)
+{
+  for (UINTN i = 0; i < strlen(str); ++i)
+  {
+    putch(x, y, str[i], fg);
+    x += FONT_WIDTH;
+  }
+}
+
+/*
  *  Blends `color` with a black pixel.
  */
 
@@ -93,6 +140,48 @@ static UINT32 blend_black(UINT32 color)
     UINT32 new_alpha = (UINT32)(alpha1 + ((255 - alpha1) * BLEND_AMT / 255) * alpha2);
     UINT32 blend_res = (new_alpha << 24) |  (r << 16) | (g << 8) | (b << 0);
     return blend_res;
+}
+
+/*
+ *  Gets the x position of a string
+ *  so it's centered in the menu.
+ */
+
+static UINT32 get_str_x(const char* str, UINT32 menu_start_x)
+{
+  UINTN text_width = strlen(str) * FONT_WIDTH;
+  return menu_start_x + (MENU_WIDTH - text_width) / 2;
+}
+
+/*
+ *  Draws a horizontal line
+ *  on the menu.
+ */
+
+static UINT32 draw_horizontal_line(UINT32 menu_start_x, UINT32 y)
+{
+  UINT32* fb = gop_get_addr();
+
+  for (UINTN x = menu_start_x; x < menu_start_x+MENU_WIDTH; ++x)
+  {
+    fb[gop_get_index(x, y)] = MENU_LINE_COLOR;
+  }
+}
+
+
+/*
+ *  Draws a vertical line
+ *  on the menu.
+ */
+
+static UINT32 draw_vertical_line(UINT32 x, UINT32 menu_start_y)
+{
+  UINT32* fb = gop_get_addr();
+
+  for (UINTN y = menu_start_y; y < menu_start_y+MENU_HEIGHT; ++y)
+  {
+    fb[gop_get_index(x, y)] = MENU_LINE_COLOR;
+  }
 }
 
 static void draw_background(void)
@@ -159,7 +248,16 @@ static void draw_menu(void)
       fb[gop_get_index(x, y)] = blend_black(old_pixel);
     }
   }
+  
+  UINTN title_y = menu_start_y+5;
+  putstr(get_str_x(MENU_TITLE, menu_start_x), title_y,
+         MENU_TITLE,
+         MENU_TITLE_COLOR
+  );
 
+  draw_horizontal_line(menu_start_x, title_y+FONT_HEIGHT);
+  draw_vertical_line(menu_start_x, menu_start_y);
+  draw_vertical_line(menu_start_x + (MENU_WIDTH-1), menu_start_y);
   gop_swap_buffers();
 }
 
