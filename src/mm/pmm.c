@@ -9,6 +9,7 @@
   ((EFI_MEMORY_DESCRIPTOR *)((UINT8 *)(mem_desc) + (size)))
 
 static struct zebra_mmap mmap;
+static struct zebra_mmap_entry* usable_entry = NULL;
 
 /*
  *  Parses the EFI memory map
@@ -20,7 +21,7 @@ static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
 {
   EFI_MEMORY_DESCRIPTOR* entry = efi_mmap;
   mmap.map = AllocatePool(efi_mmap_size);
-  UINTN i = 0;
+  mmap.entry_count = 0;
   UINTN total_bytes = 0;
   UINTN total_mib = 0;
 
@@ -30,18 +31,18 @@ static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
     switch (entry->Type)
     {
       case EfiConventionalMemory:
-        mmap.map[i].type = ZEBRA_MEM_USABLE;
+        mmap.map[mmap.entry_count].type = ZEBRA_MEM_USABLE;
         break;
       case EfiACPIReclaimMemory:
-        mmap.map[i].type = ZEBRA_MEM_ACPI_RECLAIMABLE;
+        mmap.map[mmap.entry_count].type = ZEBRA_MEM_ACPI_RECLAIMABLE;
         break;
       default:
-        mmap.map[i].type = ZEBRA_MEM_RESERVED;
+        mmap.map[mmap.entry_count].type = ZEBRA_MEM_RESERVED;
         break;
     }
 
-    mmap.map[i].phys_base = entry->PhysicalStart;
-    mmap.map[i].page_count = entry->NumberOfPages;
+    mmap.map[mmap.entry_count].phys_base = entry->PhysicalStart;
+    mmap.map[mmap.entry_count++].page_count = entry->NumberOfPages;
     total_bytes += entry->NumberOfPages * 4096;
   } while ((UINT8*)entry < (UINT8*)efi_mmap + efi_mmap_size);
   
@@ -107,6 +108,7 @@ static void init_mmap(void)
   }
 
   parse_efi_mmap(efi_mmap, efi_mmap_size, efi_descriptor_size);
+  FreePool(efi_mmap);
 }
 
 struct zebra_mmap pmm_get_mmap(void)
@@ -114,7 +116,32 @@ struct zebra_mmap pmm_get_mmap(void)
   return mmap;
 }
 
+UINTN pmm_alloc_frame(void)
+{
+  UINTN ret = 0;
+
+  if (usable_entry->page_count == 0)
+  {
+    return 0;
+  }
+  
+  --usable_entry->page_count;
+  ret = usable_entry->phys_base;
+
+  usable_entry->phys_base += 4096;
+  return ret;
+}
+
 void pmm_init(void)
 {
   init_mmap();
+
+  for (UINTN i = 0; i < mmap.entry_count; ++i)
+  {
+    if (mmap.map[i].type == ZEBRA_MEM_USABLE)
+    {
+      usable_entry = &mmap.map[i];
+      break;
+    }
+  }
 }
