@@ -1,3 +1,8 @@
+/*
+ *  @description: GOP module
+ *  @author: Ian Marco Moffett.
+ */
+
 #include <dev/gop.h>
 
 static EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = NULL;
