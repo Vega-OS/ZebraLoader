@@ -15,7 +15,7 @@ LD_FLAGS =  -Lgnu-efi/x86_64/lib 											\
 
 CFLAGS = -fpic -ffreestanding -fno-stack-protector -fno-stack-check \
 				 -fshort-wchar -mno-red-zone -maccumulate-outgoing-args -c  \
-				 -MMD -Ignu-efi/inc/
+				 -MMD -Ignu-efi/inc/ -Iinclude/
 
 CFILES = $(shell find src/ -type f -name '*.c')
 HEADER_DEPS = $(CFILES:.c=.d)
