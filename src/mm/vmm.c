@@ -57,7 +57,7 @@ static UINTN* get_next_level(UINTN* top_level, UINTN index,
 
   if (phys == 0)
   {
-    Print(L"Failed to allocate frame in %s()", __func__);
+    Print(L"Failed to allocate frame\n");
     halt();
   }
 
@@ -119,6 +119,27 @@ void vmm_map_page(UINTN* pagemap, UINTN virt, UINTN phys,
   __flush_tlb_single(virt);
 }
 
+void vmm_map_pages(UINTN* pagemap, UINTN virt, UINTN phys,
+                  UINTN flags, pagesize_t page_size,
+                  UINTN page_count)
+{
+  UINTN increment = 4096;
+  
+  switch (page_size)
+  {
+    case PAGESIZE_1GiB:
+      increment = 0x40000000;
+      break;
+    case PAGESIZE_2MiB:
+      increment = 0x200000;
+      break;
+  }
+
+  for (UINTN i = virt; i < virt+(page_count*increment); i += increment)
+  {
+    vmm_map_page(pagemap, virt + i, phys + i, flags, page_size);
+  }
+}
 
 UINTN* vmm_new_pagemap(void)
 {
@@ -131,9 +152,21 @@ UINTN* vmm_new_pagemap(void)
                PTE_PRESENT | PTE_WRITABLE, PAGESIZE_2MiB
   );
 
-  for (UINTN i = 0x200000; i < 0x40000000; i += 0x200000)
+  for (UINTN i = 0x200000; i < 0x1000000; i += 0x200000)
   {
     vmm_map_page(pagemap, i, i, PTE_PRESENT | PTE_WRITABLE, PAGESIZE_2MiB);
+  }
+
+  for (UINTN i = 0; i < mmap.entry_count; ++i)
+  {
+    struct zebra_mmap_entry* entry = &mmap.map[i];
+    vmm_map_pages(pagemap,
+                  entry->phys_base,
+                  entry->phys_base,
+                  PTE_PRESENT | PTE_WRITABLE,
+                  PAGESIZE_4K,
+                  entry->page_count
+    );
   }
 
   return pagemap;

@@ -13,15 +13,17 @@ LD_FLAGS =  -Lgnu-efi/x86_64/lib 											\
     				--no-dynamic-linker                   		\
     				-z text	
 
-CFLAGS = -fpic -ffreestanding -fno-stack-protector -fno-stack-check \
-				 -fshort-wchar -mno-red-zone -maccumulate-outgoing-args -c  \
-				 -MMD -Ignu-efi/inc/ -Iinclude/
-
 CFILES = $(shell find src/ -type f -name '*.c')
 HEADER_DEPS = $(CFILES:.c=.d)
 OBJ = $(CFILES:.c=.o)
 
 OUTPUT = Zebra.img
+KERNEL_ELF = kernel.elf
+
+CFLAGS = -fpic -ffreestanding -fno-stack-protector -fno-stack-check \
+				 -fshort-wchar -mno-red-zone -maccumulate-outgoing-args -c  \
+				 -MMD -Ignu-efi/inc/ -Iinclude/ \
+				 -D__KERNEL_ELF=L'"$(shell basename $(KERNEL_ELF))"'
 
 .PHONY: all
 all: $(OUTPUT)
@@ -35,6 +37,7 @@ $(OUTPUT): BOOTX64.EFI
 	mmd -i $@ ::/EFI/BOOT
 	mcopy -i $@ conf/startup.nsh ::
 	mcopy -i $@ assets/wallpaper.bmp ::
+	mcopy -i $@ $(KERNEL_ELF) ::
 	mcopy -i $@ BOOTX64.EFI ::/EFI/BOOT/
 	rm BOOTX64.EFI
 	rm zebra.elf
@@ -62,4 +65,4 @@ clean:
 
 .PHONY: run
 run: $(OUTPUT)
-	qemu-system-x86_64 --enable-kvm -M q35 -cdrom $^ -bios ovmf/OVMF.fd -m 256M
+	qemu-system-x86_64 --enable-kvm -monitor stdio -M q35 -cdrom $^ -bios ovmf/OVMF.fd -m 256M

@@ -418,6 +418,12 @@ void menu_init(void)
         move_down();
         break;
       case SCAN_RIGHT:
+        if (selected_entry == MENU_BOOT)
+        {
+          is_looping = 0;
+          continue;
+        }
+
         select_entry();
         break;
     }

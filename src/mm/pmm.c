@@ -27,7 +27,6 @@ static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
 
   do
   {
-    entry = NEXT_MEMORY_DESCRIPTOR(entry, efi_descriptor_size);
     switch (entry->Type)
     {
       case EfiConventionalMemory:
@@ -43,7 +42,9 @@ static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
 
     mmap.map[mmap.entry_count].phys_base = entry->PhysicalStart;
     mmap.map[mmap.entry_count++].page_count = entry->NumberOfPages;
+
     total_bytes += entry->NumberOfPages * 4096;
+    entry = NEXT_MEMORY_DESCRIPTOR(entry, efi_descriptor_size);
   } while ((UINT8*)entry < (UINT8*)efi_mmap + efi_mmap_size);
   
   total_mib = total_bytes/1048576; 
@@ -116,13 +117,30 @@ struct zebra_mmap pmm_get_mmap(void)
   return mmap;
 }
 
+static void find_usable_entry(void)
+{
+  for (UINTN i = 0; i < mmap.entry_count; ++i)
+  {
+    struct zebra_mmap_entry* entry = &mmap.map[i];
+    if (entry->type == ZEBRA_MEM_USABLE)
+    {
+      usable_entry = &mmap.map[i];
+      return;
+    }
+  }
+
+  Print(L"No more memory!\n");
+  halt();
+}
+
 UINTN pmm_alloc_frame(void)
 {
   UINTN ret = 0;
 
   if (usable_entry->page_count == 0)
   {
-    return 0;
+    usable_entry->type = ZEBRA_MEM_RESERVED;
+    find_usable_entry(); 
   }
   
   --usable_entry->page_count;
@@ -135,13 +153,5 @@ UINTN pmm_alloc_frame(void)
 void pmm_init(void)
 {
   init_mmap();
-
-  for (UINTN i = 0; i < mmap.entry_count; ++i)
-  {
-    if (mmap.map[i].type == ZEBRA_MEM_USABLE)
-    {
-      usable_entry = &mmap.map[i];
-      break;
-    }
-  }
+  find_usable_entry();
 }

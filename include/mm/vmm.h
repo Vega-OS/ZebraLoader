@@ -16,9 +16,6 @@
 #define PTE_ADDR_MASK 0x000FFFFFFFFFF000
 #define PTE_GET_ADDR(VALUE) ((VALUE) & PTE_ADDR_MASK)
 
-#define VMM_LOAD_CR3(pml4) \
-  __asm("mov %0, %%cr3" :: "r" (pml4))
-
 typedef enum
 {
   PAGESIZE_2MiB,
@@ -39,6 +36,15 @@ typedef enum
 
 void vmm_map_page(UINTN* pagemap, UINTN virt, UINTN phys,
                   UINTN flags, pagesize_t page_size);
+
+/*
+ *  Same as vmm_map_page() but maps
+ *  multiple pages.
+ */
+
+void vmm_map_pages(UINTN* pagemap, UINTN virt, UINTN phys,
+                  UINTN flags, pagesize_t page_size,
+                  UINTN page_count);
 
 /*
  *  Creates a new pagemap.
