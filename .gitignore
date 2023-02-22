@@ -3,5 +3,5 @@
 *.img
 *.o
 *.d
-/limine-efi
+/gnu-efi
 /cross
