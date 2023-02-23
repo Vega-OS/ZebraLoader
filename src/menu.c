@@ -24,6 +24,7 @@
 #define MENU_ENTRY_COLOR 0xA9A9A9
 #define MENU_TITLE_COLOR 0xFCF5E5
 #define MENU_LINE_COLOR 0x71797E
+#define MAX_CMD_LEN 15
 
 typedef enum
 {
@@ -389,17 +390,122 @@ static void select_entry(void)
   }
 }
 
+/*
+ *  Handles commands from
+ *  command mode.
+ *
+ *  Returns 0 if the boot command
+ *  was chosen.
+ */
+
+static int handle_command(CHAR16* cmd)
+{
+  if (strcmp_char16(cmd, L"q") == 0)
+  {
+    uefi_call_wrapper(RT->ResetSystem, 4,
+                      EfiResetShutdown,
+                      0,
+                      0,
+                      NULL
+    );
+
+    for (;;);
+  }
+  else if (strcmp_char16(cmd, L"reboot") == 0)
+  { 
+    uefi_call_wrapper(RT->ResetSystem, 4,
+                      EfiResetWarm,
+                      0,
+                      0,
+                      NULL
+    );
+  }
+  else if (strcmp_char16(cmd, L"boot") == 0)
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
+/*
+ *  Vim-like command mode.
+ *
+ *  Returns 0 if the boot command
+ *  was chosen.
+ */
+
+static int command_mode(void)
+{ 
+  EFI_INPUT_KEY key;
+  EFI_STATUS status;
+  UINT32 cursor_x;
+
+  CHAR16 buf[MAX_CMD_LEN + 1];    /* + 1 for null terminator */
+  UINT8 buf_index = 0;
+  
+  /* Position for the ':' on the screen */
+  UINT32 colon_x = get_menu_start_x();
+  UINT32 colon_y = get_menu_start_y() + (MENU_HEIGHT - FONT_HEIGHT);
+
+  putch(colon_x,
+        colon_y,
+        ':',
+        MENU_TITLE_COLOR,
+        0,
+        0);
+  
+  cursor_x = colon_x + FONT_WIDTH;    /* Put cursor right after ':' */
+  gop_swap_buffers();
+
+  while (1)
+  {
+    status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &key);
+    if (status == EFI_NOT_READY)
+    {
+      uefi_call_wrapper(BS->Stall, 1, 1000);
+      continue;
+    }
+    
+    if (key.ScanCode == SCAN_ESC)
+    {
+      refresh();
+      return 1;
+    }
+    else if (key.UnicodeChar == L'\r')
+    {
+      buf[buf_index] = L'\0';
+      int tmp = handle_command(buf);
+      refresh();
+      return tmp;
+    }
+    
+    if (buf_index < MAX_CMD_LEN)
+    {
+      buf[buf_index++] = key.UnicodeChar; 
+      putch(cursor_x,
+            colon_y,
+            (char)key.UnicodeChar,
+            MENU_TITLE_COLOR,
+            0,
+            0);
+
+      cursor_x += FONT_WIDTH;
+      gop_swap_buffers();
+    }
+  }
+}
+
 void menu_init(void)
 {
   EFI_INPUT_KEY key;
   EFI_STATUS status;
-  UINT8 is_looping = 1;
 
   draw_background(0, 0, gop_get_width(), gop_get_height());
   draw_menu(MENU_BOOT);
   gop_swap_buffers();
 
-  while (is_looping)
+  while (1)
   {
     status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &key);
 
@@ -420,8 +526,7 @@ void menu_init(void)
       case SCAN_RIGHT:
         if (selected_entry == MENU_BOOT)
         {
-          is_looping = 0;
-          continue;
+          return;
         }
 
         select_entry();
@@ -435,6 +540,13 @@ void menu_init(void)
     else if (key.UnicodeChar == L'k')
     {
       move_up();
+    } 
+    else if (key.UnicodeChar == L':')
+    {
+      if (command_mode() == 0)
+      {
+        return;
+      }
     }
   }
 }
