@@ -45,9 +45,8 @@ void load_kernel(EFI_HANDLE image_handle)
   UINTN* kernel_pagemap = vmm_new_pagemap();
   UINTN elf_size = 0;
   UINT8* kernel_elf = NULL;
-
+  
   disk_get_file_size(kernel, &elf_size);
-
   if (kernel == NULL || elf_size == 0)
   {
     Print(L"Could not load %s\n", __KERNEL_ELF);
@@ -55,7 +54,6 @@ void load_kernel(EFI_HANDLE image_handle)
   }
 
   kernel_elf = AllocatePool(elf_size);
-
   uefi_call_wrapper(kernel->Read, 3,
                     kernel,
                     &elf_size,
@@ -76,6 +74,7 @@ void load_kernel(EFI_HANDLE image_handle)
   UINTN phdrs_start = (UINTN)phdrs;
   UINT8* ptr = NULL;
   
+  /* Switch address spaces and start mapping the kernel */
   __asm("mov %0, %%cr3" :: "r" ((UINTN)kernel_pagemap)); 
   while ((UINTN)phdr < phdrs_start + size)
   {
