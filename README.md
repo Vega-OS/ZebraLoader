@@ -12,7 +12,7 @@ can execute various commands to
 perform specific actions. 
 The available commands include:
 
-- `q`: Shutdown.
+- `q`/`q!`/`wq`: Shutdown.
 - `reboot`: Reboots the system.
 - `boot`: Boots the system.
 
