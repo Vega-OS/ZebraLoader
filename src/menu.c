@@ -400,7 +400,11 @@ static void select_entry(void)
 
 static int handle_command(CHAR16* cmd)
 {
-  if (strcmp_char16(cmd, L"q") == 0)
+  UINT8 is_quit_cmd = strcmp_char16(cmd, L"q") == 0
+                      || strcmp_char16(cmd, L"q!") == 0
+                      || strcmp_char16(cmd, L"wq") == 0;
+
+  if (is_quit_cmd)
   {
     uefi_call_wrapper(RT->ResetSystem, 4,
                       EfiResetShutdown,
