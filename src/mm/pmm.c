@@ -144,8 +144,8 @@ UINTN pmm_alloc_frame(void)
   }
   
   --usable_entry->page_count;
-  ret = usable_entry->phys_base;
 
+  ret = usable_entry->phys_base;
   usable_entry->phys_base += 4096;
   return ret;
 }

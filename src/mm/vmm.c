@@ -7,10 +7,8 @@
 #include <mm/pmm.h>
 #include <cpuid.h>
 
-static inline void __flush_tlb_single(UINTN virt)
-{
-  __asm("invlpg (%0)" :: "r" (virt) : "memory");
-}
+#define MB 0x100000
+#define _2_MB (0x100000*2)
 
 static UINT8 is_1gib_page_supported(void)
 {
@@ -81,7 +79,6 @@ void vmm_map_page(UINTN* pagemap, UINTN virt, UINTN phys,
   if (is_1gib_page_supported() && page_size == PAGESIZE_1GiB)
   {
     pdpt[pdpt_index] = phys | flags | PTE_HUGE_PAGE;
-    __flush_tlb_single(virt);
     return;
   }
 
@@ -102,7 +99,6 @@ void vmm_map_page(UINTN* pagemap, UINTN virt, UINTN phys,
       );
     }
     
-    __flush_tlb_single(virt);
     return;
   }
 
@@ -110,35 +106,11 @@ void vmm_map_page(UINTN* pagemap, UINTN virt, UINTN phys,
   if (page_size == PAGESIZE_2MiB)
   {
     pd[pd_index] = phys | flags | PTE_HUGE_PAGE;
-    __flush_tlb_single(virt);
     return;
   }
 
   UINTN* pt = get_next_level(pd, pd_index, 1);
   pt[pt_index] = phys | flags;
-  __flush_tlb_single(virt);
-}
-
-void vmm_map_pages(UINTN* pagemap, UINTN virt, UINTN phys,
-                  UINTN flags, pagesize_t page_size,
-                  UINTN page_count)
-{
-  UINTN increment = 4096;
-  
-  switch (page_size)
-  {
-    case PAGESIZE_1GiB:
-      increment = 0x40000000;
-      break;
-    case PAGESIZE_2MiB:
-      increment = 0x200000;
-      break;
-  }
-
-  for (UINTN i = virt; i < virt+(page_count*increment); i += increment)
-  {
-    vmm_map_page(pagemap, virt + i, phys + i, flags, page_size);
-  }
 }
 
 UINTN* vmm_new_pagemap(void)
@@ -146,26 +118,13 @@ UINTN* vmm_new_pagemap(void)
   UINTN* pagemap = (UINTN*)pmm_alloc_frame();
   struct zebra_mmap mmap = pmm_get_mmap();
 
-  vmm_map_page(pagemap,
-               0x200000,
-               0x200000,
-               PTE_PRESENT | PTE_WRITABLE, PAGESIZE_2MiB
-  );
-
-  for (UINTN i = 0x200000; i < 0x1000000; i += 0x200000)
+  for (UINTN i = 0; i < 340*MB; i += _2_MB)
   {
-    vmm_map_page(pagemap, i, i, PTE_PRESENT | PTE_WRITABLE, PAGESIZE_2MiB);
-  }
-
-  for (UINTN i = 0; i < mmap.entry_count; ++i)
-  {
-    struct zebra_mmap_entry* entry = &mmap.map[i];
-    vmm_map_pages(pagemap,
-                  entry->phys_base,
-                  entry->phys_base,
-                  PTE_PRESENT | PTE_WRITABLE,
-                  PAGESIZE_4K,
-                  entry->page_count
+    vmm_map_page(pagemap,
+                 i,
+                 i,
+                 PTE_PRESENT | PTE_WRITABLE,
+                 PAGESIZE_2MiB
     );
   }
 

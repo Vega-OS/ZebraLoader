@@ -38,15 +38,6 @@ void vmm_map_page(UINTN* pagemap, UINTN virt, UINTN phys,
                   UINTN flags, pagesize_t page_size);
 
 /*
- *  Same as vmm_map_page() but maps
- *  multiple pages.
- */
-
-void vmm_map_pages(UINTN* pagemap, UINTN virt, UINTN phys,
-                  UINTN flags, pagesize_t page_size,
-                  UINTN page_count);
-
-/*
  *  Creates a new pagemap.
  */
 
