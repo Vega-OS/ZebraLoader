@@ -1,3 +1,8 @@
+/*
+ *  @description: Graphics output protocol.
+ *  @author: Queso Fuego.
+ */
+
 #include <dev/gop.h>
 
 /*

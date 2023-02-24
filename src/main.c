@@ -1,3 +1,8 @@
+/*
+ *  @description: Main entrypoint.
+ *  @author: Ian Marco Moffett.
+ */
+
 #include <def.h>
 #include <dev/gop.h>
 

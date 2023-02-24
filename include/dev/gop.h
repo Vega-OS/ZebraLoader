@@ -1,3 +1,8 @@
+/*
+ *  @description: gop.h
+ *  @author: Queso Fuego.
+ */
+
 #ifndef _DEV_GOP_H_
 #define _DEV_GOP_H_
 
