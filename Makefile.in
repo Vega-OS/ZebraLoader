@@ -17,8 +17,8 @@ CFILES = $(shell find src/ -type f -name '*.c')
 HEADER_DEPS = $(CFILES:.c=.d)
 OBJ = $(CFILES:.c=.o)
 
-OUTPUT = Zebra.img
-KERNEL_ELF = kernel.elf
+OUTPUT = @OUTPUT_IMG@
+KERNEL_ELF = @KERNEL_ELF@
 
 CFLAGS = @CFLAGS@ -D__KERNEL_ELF=L'"$(shell basename $(KERNEL_ELF))"'
 
@@ -59,6 +59,10 @@ gnu-efi:
 .PHONY: clean
 clean:
 	rm $(HEADER_DEPS) $(OBJ)
+
+.PHONY: fullclean
+fullclean:
+	rm $(HEADER_DEPS) $(OBJ) configure config.log config.status $(OUTPUT) Makefile
 
 .PHONY: run
 run: $(OUTPUT)

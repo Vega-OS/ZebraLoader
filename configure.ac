@@ -8,13 +8,20 @@ CFLAGS="-fpic -ffreestanding -fno-stack-protector -fno-stack-check  \\
 				-fshort-wchar -mno-red-zone -maccumulate-outgoing-args -c   \\
         -MMD -Ignu-efi/inc/ -Iinclude/"
 
-AC_ARG_ENABLE([graphics],
-              [AS_HELP_STRING([--enable-graphics], [show graphical menu])],
-              [if test "x$enableval" = "xyes"
-              then
-                CFLAGS="$CFLAGS -DUSE_GFX"
-              fi])
+AC_ARG_WITH([output-img],
+            [AS_HELP_STRING([--with-output-img=<filename>], [Output .img name])],
+            [output_img="$withval"],
+            [output-img="kernel.elf"])
+
+
+AC_ARG_WITH([kernel-elf],
+            [AS_HELP_STRING([--with-kernel-elf=<filename>], [Kernel to load])],
+            [kernel_elf="$withval"],
+            [kernel_elf="kernel.elf"])
 
 AC_SUBST(CFLAGS, [$CFLAGS])
+AC_SUBST(OUTPUT_IMG, [$output_img])
+AC_SUBST(KERNEL_ELF, [$kernel_elf])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
