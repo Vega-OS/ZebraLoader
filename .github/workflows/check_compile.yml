@@ -2,12 +2,8 @@ name: Check for compile errors
 on:
   push:
     branches: [ main ]
-    env:
-      TERM: dumb
   pull_request:
     branches: [ main ]
-    env:
-      TERM: dumb
   workflow_dispatch:
 jobs:
    job:
@@ -15,18 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install deps
+      - name: Build
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install clang
+          sudo apt-get -y install gcc
           sudo apt-get -y install make
           sudo apt-get -y install git
           sudo apt-get -y install nasm
           sudo apt-get -y install mtools
           sudo apt-get -y install autoconf
-
-      - name: Build cross-compiler
-        run: bash tools/cross.sh
-
-      - name: Build ZebraLoader
-        run: ./configure; make
+          bash tools/cross.sh
+          ./configure
+          make
