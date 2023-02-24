@@ -5,17 +5,20 @@ jobs:
   build:
     name: Check for compile errors
     runs-on: ubuntu-latest
-    container: archlinux:latest
 
     steps:
       - name: Install deps
-        run: pacman --noconfirm -Syu; pacman --needed --noconfirm -S base-devel git autoconf automake nasm mtools curl wget
-
-      - name: Checkout code
-        uses: actions/checkout@v3
+        run:
+          sudo apt-get -y install clang
+          sudo apt-get -y install make
+          sudo apt-get -y install git
+          sudo apt-get -y install nasm
+          sudo apt-get -y install xorriso
+          sudo apt-get -y install mtools
+          sudo apt-get -y install autoconf
 
       - name: Build cross-compiler
-        run: export TERM=dumb; tools/cross.sh
+        run: bash tools/cross.sh
 
       - name: Build ZebraLoader
         run: ./configure; make
