@@ -2,8 +2,12 @@ name: Check for compile errors
 on:
   push:
     branches: [ main ]
+    env:
+      TERM: dumb
   pull_request:
     branches: [ main ]
+    env:
+      TERM: dumb
   workflow_dispatch:
 jobs:
    job:
