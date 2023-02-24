@@ -8,7 +8,7 @@ jobs:
 
     steps:
       - name: Install deps
-        run:
+        run: |
           sudo apt-get -y install clang
           sudo apt-get -y install make
           sudo apt-get -y install git
