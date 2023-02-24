@@ -37,7 +37,7 @@ $(OUTPUT): BOOTX64.EFI
 	mmd -i $@ ::/EFI/BOOT
 	mcopy -i $@ conf/startup.nsh ::
 	mcopy -i $@ assets/wallpaper.bmp ::
-	#mcopy -i $@ $(KERNEL_ELF) ::
+	@#mcopy -i $@ $(KERNEL_ELF) ::
 	mcopy -i $@ BOOTX64.EFI ::/EFI/BOOT/
 	rm BOOTX64.EFI
 	rm zebra.elf
