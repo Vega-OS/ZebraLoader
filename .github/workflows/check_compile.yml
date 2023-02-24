@@ -1,19 +1,23 @@
 name: Check for compile errors
-on: [push, pull_request]
-
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 jobs:
-  build:
-    name: Check for compile errors
+   job:
     runs-on: ubuntu-latest
-
     steps:
+      - uses: actions/checkout@v2
+
       - name: Install deps
         run: |
+          sudo apt-get -y update
           sudo apt-get -y install clang
           sudo apt-get -y install make
           sudo apt-get -y install git
           sudo apt-get -y install nasm
-          sudo apt-get -y install xorriso
           sudo apt-get -y install mtools
           sudo apt-get -y install autoconf
 
