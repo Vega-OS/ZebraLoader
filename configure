@@ -1794,7 +1794,7 @@ if test ${with_output_img+y}
 then :
   withval=$with_output_img; output_img="$withval"
 else $as_nop
-  output_img="kernel.elf"
+  output_img="Zebra.img"
 fi
 
 
