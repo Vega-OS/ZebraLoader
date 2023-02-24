@@ -20,6 +20,6 @@ jobs:
           sudo apt-get -y install nasm
           sudo apt-get -y install mtools
           sudo apt-get -y install autoconf
-          bash tools/cross.sh
+          sh tools/cross.sh
           ./configure
           make
