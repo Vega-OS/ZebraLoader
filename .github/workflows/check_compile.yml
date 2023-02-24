@@ -14,11 +14,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Git config
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
       - name: Build cross-compiler
-        run: bash tools/cross.sh
+        run: export TERM=dumb; bash tools/cross.sh
 
       - name: Build ZebraLoader
         run: ./configure; make
