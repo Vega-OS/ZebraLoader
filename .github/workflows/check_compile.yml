@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build cross-compiler
-        run: export TERM=dumb; bash tools/cross.sh
+        run: export TERM=dumb; tools/cross.sh
 
       - name: Build ZebraLoader
         run: ./configure; make
