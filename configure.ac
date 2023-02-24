@@ -19,9 +19,15 @@ AC_ARG_WITH([kernel-elf],
             [kernel_elf="$withval"],
             [kernel_elf="kernel.elf"])
 
+AC_ARG_WITH([wallpaper-filename],
+            [AS_HELP_STRING([--with-wallpaper-filename=<filename>], [e.g foo.bmp for assets/foo.bmp])],
+            [wallpaper_filename="$withval"],
+            [wallpaper_filename="wallpaper.bmp"])
+
 AC_SUBST(CFLAGS, [$CFLAGS])
 AC_SUBST(OUTPUT_IMG, [$output_img])
 AC_SUBST(KERNEL_ELF, [$kernel_elf])
+AC_SUBST(WALLPAPER_FILENAME, [$wallpaper_filename])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

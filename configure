@@ -617,6 +617,7 @@ PACKAGE_URL=''
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+WALLPAPER_FILENAME
 KERNEL_ELF
 OUTPUT_IMG
 CFLAGS
@@ -664,6 +665,7 @@ ac_user_opts='
 enable_option_checking
 with_output_img
 with_kernel_elf
+with_wallpaper_filename
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1289,6 +1291,8 @@ Optional Packages:
                           Output .img name
   --with-kernel-elf=<filename>
                           Kernel to load
+  --with-wallpaper-filename=<filename>
+                          e.g foo.bmp for assets/foo.bmp
 
 Report bugs to <ian@ian-moffett.com>.
 _ACEOF
@@ -1805,11 +1809,23 @@ else $as_nop
 fi
 
 
+
+# Check whether --with-wallpaper-filename was given.
+if test ${with_wallpaper_filename+y}
+then :
+  withval=$with_wallpaper_filename; wallpaper_filename="$withval"
+else $as_nop
+  wallpaper_filename="wallpaper.bmp"
+fi
+
+
 CFLAGS=$CFLAGS
 
 OUTPUT_IMG=$output_img
 
 KERNEL_ELF=$kernel_elf
+
+WALLPAPER_FILENAME=$wallpaper_filename
 
 
 ac_config_files="$ac_config_files Makefile"
