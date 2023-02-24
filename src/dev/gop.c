@@ -28,7 +28,8 @@ void gop_init(void)
                              gop, 
                              (gop->Mode == NULL) ? 0 : gop->Mode->Mode, 
                              &SizeOfInfo,
-                             &info);
+                             &info
+  );
 
   // Set the current mode
   if (status == EFI_NOT_STARTED) 
