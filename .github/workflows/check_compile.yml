@@ -1,0 +1,18 @@
+name: Check for compile errors
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Check for compile errors
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+      - name: Install deps
+        run: pacman --noconfirm -Syu; pacman --needed --noconfirm -S base-devel git autoconf automake nasm mtools curl wget
+
+      - name: Build cross-compiler
+        run: bash tools/cross.sh
+
+      - name: Build ZebraLoader
+        run: ./configure; make
