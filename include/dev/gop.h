@@ -40,20 +40,13 @@ UINT32 gop_get_height(void);
  *  Returns the address of the backbuffer.
  */
 
-UINT32* gop_get_addr(void);
+UINT32 *gop_get_addr(void);
 
 /*
  *  Returns framebuffer pitch.
  */
 
 UINT32 gop_get_pitch(void);
-
-/*
- *  Writes the backbuffer onto
- *  the main buffer.
- */
-
-void gop_swap_buffers(void);
 
 /*
  *  Writes the backbuffer from

@@ -5,6 +5,9 @@
 
 #include <dev/gop.h>
 
+static UINT32 *backbuffer = NULL;
+static EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = NULL;
+
 /*
  * Find GOP, get the current mode info
  * Mostly taken from https://wiki.osdev.org/GOP
@@ -13,7 +16,6 @@ void gop_init(void)
 {
   
   EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
-  EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
   EFI_STATUS status;
 
   // Verify GOP exists
@@ -54,6 +56,7 @@ void gop_init(void)
 
   // TEMP
   Print(L"Successfully set native GOP mode");
+  backbuffer = AllocatePool(gop_get_size());
 }
 
 /*
@@ -61,45 +64,56 @@ void gop_init(void)
  *  in bytes.
  */
 
-UINT32 gop_get_size(void);
+UINT32 gop_get_size(void)
+{
+  return gop_get_pitch()*gop_get_height();
+}
 
 /*
  *  Returns the index into the
  *  framebuffer.
  */
 
-UINT32 gop_get_index(UINT32 x, UINT32 y);
+UINT32 gop_get_index(UINT32 x, UINT32 y)
+{
+  return x+y*(gop_get_pitch()/4);
+}
 
 /*
  *  Returns the width of the framebuffer.
  */
 
-UINT32 gop_get_width(void);
+UINT32 gop_get_width(void)
+{
+  return gop->Mode->Info->HorizontalResolution;
+}
 
 /*
  *  Returns the height of the framebuffer.
  */
 
-UINT32 gop_get_height(void);
+UINT32 gop_get_height(void)
+{
+  return gop->Mode->Info->VerticalResolution;
+}
 
 /*
  *  Returns the address of the backbuffer.
  */
 
-UINT32* gop_get_addr(void);
+UINT32 *gop_get_addr(void)
+{
+  return backbuffer;
+}
 
 /*
  *  Returns framebuffer pitch.
  */
 
-UINT32 gop_get_pitch(void);
-
-/*
- *  Writes the backbuffer onto
- *  the main buffer.
- */
-
-void gop_swap_buffers(void);
+UINT32 gop_get_pitch(void)
+{
+  return 4*gop->Mode->Info->PixelsPerScanLine;
+}
 
 /*
  *  Writes the backbuffer from
