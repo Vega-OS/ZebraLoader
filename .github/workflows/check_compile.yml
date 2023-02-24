@@ -11,6 +11,9 @@ jobs:
       - name: Install deps
         run: pacman --noconfirm -Syu; pacman --needed --noconfirm -S base-devel git autoconf automake nasm mtools curl wget
 
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Build cross-compiler
         run: bash tools/cross.sh
 
