@@ -57,4 +57,10 @@ UINT32 gop_get_pitch(void);
 void gop_swap_buffers_at(UINT32 start_x, UINT32 start_y,
                          UINT32 end_x, UINT32 end_y);
 
+/*
+ *  Swaps the entire buffer.
+ */
+
+void gop_swap_buffers(void);
+
 #endif

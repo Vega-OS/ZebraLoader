@@ -9,54 +9,50 @@ static UINT32 *backbuffer = NULL;
 static EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = NULL;
 
 /*
- * Find GOP, get the current mode info
- * Mostly taken from https://wiki.osdev.org/GOP
+ *  Returns GOP.
  */
-void gop_init(void)
+
+static EFI_GRAPHICS_OUTPUT_PROTOCOL* get_gop(void)
 {
-  
-  EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+  EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
   EFI_STATUS status;
 
-  // Verify GOP exists
-  status = uefi_call_wrapper(BS->LocateProtocol, 3, &gopGuid, NULL, (void **)&gop);
-  if (EFI_ERROR(status))
-  {
-    Print(L"Unable to locate GOP");
-  }
-
-
-  // Get current GOP mode info
-  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
-  UINTN SizeOfInfo, numModes, nativeMode;
-
-  status = uefi_call_wrapper(gop->QueryMode, 
-                             4, 
-                             gop, 
-                             (gop->Mode == NULL) ? 0 : gop->Mode->Mode, 
-                             &SizeOfInfo,
-                             &info
+  status = uefi_call_wrapper(BS->LocateProtocol,
+                             3,
+                             &gop_guid,
+                             NULL,
+                             (void**)&gop
   );
 
-  // Set the current mode
-  if (status == EFI_NOT_STARTED) 
-  {
-    uefi_call_wrapper(gop->SetMode, 2, gop, 0);
-  }
-
   if (EFI_ERROR(status))
   {
-    Print(L"Unable to get native mode");
-  }
-  else
-  {
-    nativeMode = gop->Mode->Mode;
-    numModes = gop->Mode->MaxMode;
+    Print(L"ERROR: Graphics output protocol unavailable!\n");
+    halt();
   }
 
-  // TEMP
-  Print(L"Successfully set native GOP mode");
-  backbuffer = AllocatePool(gop_get_size());
+  return gop;
+}
+
+void gop_init(void)
+{
+  EFI_STATUS status;
+
+  Print(L"Detecting Graphics Output Protocol..\n");
+  gop = get_gop();
+  
+  Print(L"Found GOP at address 0x%x, occupying %d pages.\n",
+        gop->Mode->FrameBufferBase,
+        gop->Mode->FrameBufferSize/4096
+  );
+  
+  backbuffer = AllocatePool(gop->Mode->FrameBufferSize);
+
+  // Clear the backbuffer.
+  for (UINT32 i = 0; i < gop->Mode->FrameBufferSize/4; ++i)
+  {
+    backbuffer[i] = 0;
+  }
 }
 
 /*
@@ -122,4 +118,27 @@ UINT32 gop_get_pitch(void)
  */
 
 void gop_swap_buffers_at(UINT32 start_x, UINT32 start_y,
-                         UINT32 end_x, UINT32 end_y);
+                         UINT32 end_x, UINT32 end_y)
+{
+  UINT32 *fb = (UINT32 *)gop->Mode->FrameBufferBase;
+
+
+  for (UINT32 y = start_y; y < end_y; ++y)
+  {
+    for (UINT32 x = start_x; x < end_x; ++x)
+    {
+      UINT32 pixel = backbuffer[gop_get_index(x, y)];
+      fb[gop_get_index(x, y)] = pixel;
+    }
+  }
+}
+
+void gop_swap_buffers(void)
+{
+  UINT32 *fb = (UINT32 *)gop->Mode->FrameBufferBase;
+
+  for (UINT32 i = 0; i < gop->Mode->FrameBufferSize/4; ++i)
+  {
+    fb[i] = backbuffer[i];
+  }
+}
