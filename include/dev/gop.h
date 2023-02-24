@@ -50,4 +50,13 @@ UINT32 gop_get_pitch(void);
 
 void gop_swap_buffers(void);
 
+/*
+ *  Writes the backbuffer from
+ *  postion (start_x,start_y) to
+ *  the main buffer until (end_x, end_y)
+ */
+
+void gop_swap_buffers_at(UINT32 start_x, UINT32 start_y,
+                         UINT32 end_x, UINT32 end_y);
+
 #endif
