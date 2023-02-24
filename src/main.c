@@ -9,8 +9,15 @@ EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE* st)
 {
   InitializeLib(image_handle, st);
   uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, 0);
-  pmm_init();
+  uefi_call_wrapper(BS->SetWatchdogTimer,    /* Disable the watchdog timer */
+                    4,
+                    0,
+                    0,
+                    0,
+                    NULL
+  ); 
 
+  pmm_init();
   disk_init(image_handle);
 
   gop_init();
@@ -18,6 +25,5 @@ EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE* st)
  
   uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, 0); 
   load_kernel(image_handle);
-
   __builtin_unreachable();
 }
