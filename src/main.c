@@ -6,7 +6,7 @@
 #include <def.h>
 #include <dev/gop.h>
 
-EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE* st)
+EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *st)
 {
   InitializeLib(image_handle, st);
   uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, 0);
