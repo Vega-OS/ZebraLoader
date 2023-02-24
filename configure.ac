@@ -11,7 +11,7 @@ CFLAGS="-fpic -ffreestanding -fno-stack-protector -fno-stack-check  \\
 AC_ARG_WITH([output-img],
             [AS_HELP_STRING([--with-output-img=<filename>], [Output .img name])],
             [output_img="$withval"],
-            [output-img="kernel.elf"])
+            [output_img="kernel.elf"])
 
 
 AC_ARG_WITH([kernel-elf],
