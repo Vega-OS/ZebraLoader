@@ -28,6 +28,7 @@ EFI_FILE *disk_get_file(CHAR16 *path)
                         (void **)&loaded_image
   );
 
+
   if (EFI_ERROR(s))
   {
     return NULL;
