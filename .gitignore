@@ -5,3 +5,6 @@
 *.d
 /gnu-efi
 /cross
+autom4te.cache/
+*.log
+*.status

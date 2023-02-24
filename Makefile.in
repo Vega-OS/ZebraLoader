@@ -20,10 +20,7 @@ OBJ = $(CFILES:.c=.o)
 OUTPUT = Zebra.img
 KERNEL_ELF = kernel.elf
 
-CFLAGS = -fpic -ffreestanding -fno-stack-protector -fno-stack-check \
-				 -fshort-wchar -mno-red-zone -maccumulate-outgoing-args -c  \
-				 -MMD -Ignu-efi/inc/ -Iinclude/ \
-				 -D__KERNEL_ELF=L'"$(shell basename $(KERNEL_ELF))"'
+CFLAGS = @CFLAGS@ -D__KERNEL_ELF=L'"$(shell basename $(KERNEL_ELF))"'
 
 .PHONY: all
 all: $(OUTPUT)
