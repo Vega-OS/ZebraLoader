@@ -54,6 +54,6 @@ void load_kernel(CHAR16 *file_name)
   // Parse elf header
   Elf64_Ehdr *elf_hdr = (Elf64_Ehdr *)file_buffer;
 
-  Print(L"Found ELF entry point: %x\n", elf_hdr->e_entry);
+  Print(L"Found ELF entry point: 0x%x\n", elf_hdr->e_entry);
 }
 

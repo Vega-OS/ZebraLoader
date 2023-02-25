@@ -430,6 +430,8 @@ static void run_menu_entry(void)
                         NULL);
       for (;;);
     case MENU_ENTRY_BOOT:
+      clear_backbuffer();
+      gop_swap_buffers();
       load_kernel(__KERNEL_ELF);
       for (;;);
   }

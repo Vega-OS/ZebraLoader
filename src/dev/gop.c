@@ -35,7 +35,7 @@ static EFI_GRAPHICS_OUTPUT_PROTOCOL *get_gop(void)
   return gop;
 }
 
-static void clear_backbuffer(void)
+void clear_backbuffer(void)
 {
   // Clear the backbuffer.
   for (UINT32 i = 0; i < gop->Mode->FrameBufferSize/4; ++i)
