@@ -14,3 +14,8 @@ To have a wallpaper on the bootscreen you can
 build like so (for assets/wallpaper.bmp set):
 
 ``./configure --with-wallpaper-filename=wallpaper.bmp; make``
+
+## Resolution
+
+Don't like the resolution? Press ``+`` with SHIFT held down to get
+the next resolution available!
