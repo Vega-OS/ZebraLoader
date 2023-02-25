@@ -38,6 +38,7 @@
 typedef enum
 {
   MENU_ENTRY_BOOT,
+  MENU_ENTRY_SHUTDOWN,
   MENU_ENTRY_REBOOT,
   MENU_ENTRY_TOP,
 } menu_entry_t;
@@ -45,6 +46,7 @@ typedef enum
 
 static const char* menu_entry_strtab[] = {
   "Boot",
+  "Shutdown",
   "Reboot",
 };
 
@@ -401,6 +403,10 @@ static void refresh_menu(void)
   );
 }
 
+/*
+ *  Runs the selected menu entry.
+ */
+
 static void run_menu_entry(void)
 {
   switch (selected_entry)
@@ -409,6 +415,15 @@ static void run_menu_entry(void)
       uefi_call_wrapper(RT->ResetSystem,
                         4,
                         EfiResetCold,
+                        0,
+                        0,
+                        NULL);
+
+      for (;;);
+    case MENU_ENTRY_SHUTDOWN:
+      uefi_call_wrapper(RT->ResetSystem,
+                        4,
+                        EfiResetShutdown,
                         0,
                         0,
                         NULL);
