@@ -19,3 +19,7 @@ build like so (for assets/wallpaper.bmp set):
 
 Don't like the resolution? Press ``+`` with SHIFT held down to get
 the next resolution available!
+
+## Custom boot entryname
+
+For "CoolOS" you can build like so: ``./configure --with-boot-entryname=CoolOS``
