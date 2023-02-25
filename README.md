@@ -23,3 +23,7 @@ the next resolution available!
 ## Custom boot entryname
 
 For "CoolOS" you can build like so: ``./configure --with-boot-entryname=CoolOS``
+
+## Screenshot
+
+![screenshot](https://github.com/Vega-OS/ZebraLoader/blob/main/.github/screenshot.png?)
