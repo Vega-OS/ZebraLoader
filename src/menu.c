@@ -11,11 +11,12 @@
 #include <dev/gop.h>
 
 #define MENU_HEIGHT 400
-#define MENU_WIDTH  450
+#define MENU_WIDTH  500
 #define MENU_TEXT_COLOR 0xF9F6EE
 #define MENU_LINE_COLOR 0x71797E
 #define MENU_LINE_THICKNESS 2
-#define MENU_TITLE "ZebraLoader v0.0.2"     // NOTE: Update version here too.
+#define MENU_TITLE "ZebraLoader v0.0.3"     // NOTE: Update version here too.
+#define MENU_HELP  "Use ARROWS to navigate and ENTER to select"
 
 #if MENU_LINE_THICKNESS == 0
 #error "MENU_LINE_THICKNESS == 0"
@@ -78,13 +79,13 @@ static void *get_wallpaper(void)
 static UINT32 get_menu_start_x(void)
 {
   UINT32 fb_width = gop_get_width();
-  return (fb_width - MENU_WIDTH) / 2;
+  return SAFE_DIV(fb_width - MENU_WIDTH, 2);
 }
 
 static UINT32 get_menu_start_y(void)
 {
   UINT32 fb_height = gop_get_height();
-  return (fb_height - MENU_HEIGHT) / 2;
+  return SAFE_DIV(fb_height - MENU_HEIGHT, 2);
 }
 
 /*
@@ -179,14 +180,14 @@ static void draw_wallpaper(UINT32 start_x, UINT32 start_y,
     for (int x = start_x; x < end_x; ++x)
     {
       /* These 2 lines scale the image to the size of the framebuffer */
-      UINT32 bx = (x * hdr->width) / gop_get_width();
-      UINT32 by = (y * hdr->height) / gop_get_height();
+      UINT32 bx = SAFE_DIV(x * hdr->width, gop_get_width());
+      UINT32 by = SAFE_DIV(y * hdr->height, gop_get_height());
 
       UINT32 b = image[(by * hdr->width + bx) * 3];
       UINT32 g = image[(by * hdr->width + bx) * 3 + 1];
       UINT32 r = image[(by * hdr->width + bx) * 3 + 2];
 
-      UINT32 rgb = ((r << 16) | (g << 8) | b);
+      UINT32 rgb = ((r << 16) | (g << 8) | b);      
       fb[gop_get_index(x, gop_get_height()-y)] = rgb;
     }
   }
@@ -285,7 +286,7 @@ static void draw_menu_lines(void)
 
 static void draw_menu(void)
 {
-  // Get the starting position to draw the menu square.
+  // Get the starting position to draw the menu square. 
   UINT32 menu_start_x = get_menu_start_x();
   UINT32 menu_start_y = get_menu_start_y();
 
@@ -308,16 +309,60 @@ static void draw_menu(void)
          MENU_TEXT_COLOR,
          0,
          0);
+
+  putstr(get_str_x(MENU_HELP),
+         menu_start_y+(MENU_HEIGHT-20),
+         MENU_HELP,
+         MENU_TEXT_COLOR,
+         0,
+         0
+  );
 }
 
-void menu_start(void)
-{   
+static void draw_ui(void)
+{
   draw_wallpaper(0, 0, gop_get_width(), gop_get_height());
   draw_menu();
   gop_swap_buffers_at(0, 0, gop_get_width(), gop_get_height());
+}
+
+/*
+ *  Handles a keypress in the
+ *  menu main loop.
+ */
+
+static void handle_efi_input_key(EFI_INPUT_KEY key)
+{
+  switch (key.UnicodeChar)
+  {
+    case '+':
+      gop_next_mode();
+      draw_ui(); 
+      break;
+  }
+}
+
+void menu_start(void)
+{
+  draw_ui();
+
+  EFI_INPUT_KEY key;
+  EFI_STATUS s;
 
   for (;;)
   {
-    __asm("pause");
+    s = uefi_call_wrapper(ST->ConIn->ReadKeyStroke,
+                          2,
+                          ST->ConIn,
+                          &key
+    );
+    
+    if (s == EFI_NOT_READY)
+    {
+      uefi_call_wrapper(BS->Stall, 1, 1000);
+      continue;
+    }
+
+    handle_efi_input_key(key);
   }
 }

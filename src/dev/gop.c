@@ -7,22 +7,23 @@
 
 static UINT32 *backbuffer = NULL;
 static EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = NULL;
+static UINTN num_modes = 0;
 
 /*
  *  Returns GOP.
  */
 
-static EFI_GRAPHICS_OUTPUT_PROTOCOL* get_gop(void)
+static EFI_GRAPHICS_OUTPUT_PROTOCOL *get_gop(void)
 {
   EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
-  EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
   EFI_STATUS status;
 
   status = uefi_call_wrapper(BS->LocateProtocol,
                              3,
                              &gop_guid,
                              NULL,
-                             (void**)&gop
+                             (void **)&gop
   );
 
   if (EFI_ERROR(status))
@@ -32,6 +33,15 @@ static EFI_GRAPHICS_OUTPUT_PROTOCOL* get_gop(void)
   }
 
   return gop;
+}
+
+static void clear_backbuffer(void)
+{
+  // Clear the backbuffer.
+  for (UINT32 i = 0; i < gop->Mode->FrameBufferSize/4; ++i)
+  {
+    backbuffer[i] = 0;
+  }
 }
 
 void gop_init(void)
@@ -47,12 +57,32 @@ void gop_init(void)
   );
   
   backbuffer = AllocatePool(gop->Mode->FrameBufferSize);
+  clear_backbuffer();
 
-  // Clear the backbuffer.
-  for (UINT32 i = 0; i < gop->Mode->FrameBufferSize/4; ++i)
+  // Get available modes.
+  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info = NULL;
+  UINTN sizeof_info, native_mode;
+
+  status = uefi_call_wrapper(gop->QueryMode,
+                             4,
+                             gop,
+                             gop->Mode == NULL ? 0 : gop->Mode->Mode,
+                             &sizeof_info,
+                             &info
+  );
+  
+  // Get around buggy UEFI firmware.
+  if (status == EFI_NOT_STARTED)
   {
-    backbuffer[i] = 0;
+    status = uefi_call_wrapper(gop->SetMode, 2, gop, 0);
   }
+
+  if (EFI_ERROR(status))
+  {
+    Print(L"Failed to get mode count\n");
+  }
+
+  num_modes = gop->Mode->MaxMode;
 }
 
 /*
@@ -141,4 +171,19 @@ void gop_swap_buffers(void)
   {
     fb[i] = backbuffer[i];
   }
+}
+
+void gop_next_mode(void)
+{
+  static UINTN next_mode = 1;
+  uefi_call_wrapper(gop->SetMode, 2, gop, next_mode++);
+
+  if (next_mode >= num_modes)
+  {
+    next_mode = 0;
+  }
+
+  FreePool(backbuffer);
+  backbuffer = AllocatePool(gop->Mode->FrameBufferSize);
+  clear_backbuffer();
 }

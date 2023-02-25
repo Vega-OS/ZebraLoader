@@ -63,4 +63,11 @@ void gop_swap_buffers_at(UINT32 start_x, UINT32 start_y,
 
 void gop_swap_buffers(void);
 
+/*
+ *  Switches to the next video mode
+ *  available.
+ */
+
+void gop_next_mode(void);
+
 #endif
