@@ -8,12 +8,13 @@
 #include <menu.h>
 #include <dev/gop.h>
 #include <dev/disk.h>
+#include <mm/pmm.h>
 
 EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *st)
 {
   InitializeLib(image_handle, st);
   uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, 0);
-  uefi_call_wrapper(BS->SetWatchdogTimer,    /* Disable the watchdog timer */
+  uefi_call_wrapper(BS->SetWatchdogTimer,    // Disable the watchdog timer
                     4,
                     0,
                     0,
@@ -29,6 +30,7 @@ EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *st)
   }
 
   gop_init();  // Verify GOP and set native mode
+  pmm_init();
 
   disk_init(image_handle);
   menu_start(); 
