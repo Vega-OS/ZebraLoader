@@ -617,6 +617,7 @@ PACKAGE_URL=''
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+BOOT_ENTRYNAME
 WALLPAPER_FILENAME
 KERNEL_ELF
 OUTPUT_IMG
@@ -664,6 +665,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_output_img
+with_boot_entryname
 with_kernel_elf
 with_wallpaper_filename
 '
@@ -1289,6 +1291,8 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-output-img=<filename>
                           Output .img name
+  --with-boot-entryname=<name>
+                          Name for the entry that boots the system up
   --with-kernel-elf=<filename>
                           Kernel to load
   --with-wallpaper-filename=<filename>
@@ -1799,6 +1803,15 @@ fi
 
 
 
+# Check whether --with-boot-entryname was given.
+if test ${with_boot_entryname+y}
+then :
+  withval=$with_boot_entryname; boot_entryname="$withval"
+else $as_nop
+  boot_entryname="Boot"
+fi
+
+
 
 # Check whether --with-kernel-elf was given.
 if test ${with_kernel_elf+y}
@@ -1826,6 +1839,8 @@ OUTPUT_IMG=$output_img
 KERNEL_ELF=$kernel_elf
 
 WALLPAPER_FILENAME=$wallpaper_filename
+
+BOOT_ENTRYNAME=$boot_entryname
 
 
 ac_config_files="$ac_config_files Makefile"

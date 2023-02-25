@@ -13,6 +13,11 @@ AC_ARG_WITH([output-img],
             [output_img="$withval"],
             [output_img="Zebra.img"])
 
+AC_ARG_WITH([boot-entryname],
+            [AS_HELP_STRING([--with-boot-entryname=<name>],
+                            [Name for the entry that boots the system up])],
+            [boot_entryname="$withval"],
+            [boot_entryname="Boot"])
 
 AC_ARG_WITH([kernel-elf],
             [AS_HELP_STRING([--with-kernel-elf=<filename>], [Kernel to load])],
@@ -28,6 +33,7 @@ AC_SUBST(CFLAGS, [$CFLAGS])
 AC_SUBST(OUTPUT_IMG, [$output_img])
 AC_SUBST(KERNEL_ELF, [$kernel_elf])
 AC_SUBST(WALLPAPER_FILENAME, [$wallpaper_filename])
+AC_SUBST(BOOT_ENTRYNAME, [$boot_entryname])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -45,7 +45,7 @@ typedef enum
 
 
 static const char* menu_entry_strtab[] = {
-  "Boot",
+  BOOT_ENTRYNAME,
   "Shutdown",
   "Reboot",
 };
