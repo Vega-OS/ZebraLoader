@@ -1,4 +1,4 @@
-AC_INIT([zebra_loader], [0.0.2], [ian@ian-moffett.com])
+AC_INIT([zebra_loader], [0.0.3], [ian@ian-moffett.com])
 CROSS_ERR_MSG="Please run tools/cross.sh"
 
 AC_CHECK_FILE([cross/bin/x86_64-elf-gcc], [], AC_MSG_ERROR([$CROSS_ERR_MSG]))
