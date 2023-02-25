@@ -1,6 +1,6 @@
-CC = cross/bin/x86_64-elf-gcc
-LD = cross/bin/x86_64-elf-ld
-OBJCOPY = cross/bin/x86_64-elf-objcopy
+CC = gcc
+LD = ld
+OBJCOPY = objcopy
 LD_FLAGS =  -Lgnu-efi/x86_64/lib 											\
 						-Lgnu-efi/x86_64/gnuefi										\
 						-Tgnu-efi/gnuefi/elf_x86_64_efi.lds				\
