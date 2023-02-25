@@ -15,7 +15,7 @@
 #define MENU_TEXT_COLOR 0xF9F6EE
 #define MENU_LINE_COLOR 0x71797E
 #define MENU_LINE_THICKNESS 2
-#define MENU_TITLE "ZebraLoader v0.0.1"     // NOTE: Update version here too.
+#define MENU_TITLE "ZebraLoader v0.0.2"     // NOTE: Update version here too.
 
 #if MENU_LINE_THICKNESS == 0
 #error "MENU_LINE_THICKNESS == 0"
