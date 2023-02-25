@@ -70,4 +70,9 @@ void gop_swap_buffers(void);
 
 void gop_next_mode(void);
 
+/*
+ * Clear the backbuffer
+ */
+void clear_backbuffer(void);
+
 #endif
