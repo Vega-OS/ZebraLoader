@@ -18,6 +18,11 @@
 #define MENU_TITLE "ZebraLoader v0.0.3"     // NOTE: Update version here too.
 #define MENU_HELP  "Use ARROWS to navigate and ENTER to select"
 
+#define MENU_ENTRY_SEL_FG 0x1B1212
+#define MENU_ENTRY_SEL_BG 0xA9A9A9
+#define MENU_ENTRY_COLOR 0xA9A9A9
+#define MENU_LINE_SPACING 40
+
 #if MENU_LINE_THICKNESS == 0
 #error "MENU_LINE_THICKNESS == 0"
 #endif
@@ -29,6 +34,21 @@
 #if MENU_HEIGHT == 0
 #error "MENU_HEIGHT == 0"
 #endif
+
+typedef enum
+{
+  MENU_ENTRY_BOOT,
+  MENU_ENTRY_REBOOT,
+  MENU_ENTRY_TOP,
+} menu_entry_t;
+
+
+static const char* menu_entry_strtab[] = {
+  "Boot",
+  "Reboot",
+};
+
+static menu_entry_t selected_entry = MENU_ENTRY_BOOT;
 
 #define BLEND_GET_ALPHA(color) ((color >> 24) & 0x000000FF)
 #define BLEND_GET_RED(color)   ((color >> 16) & 0x000000FF)
@@ -251,12 +271,11 @@ static void draw_line_y(UINT32 x_start, UINT32 y_start, UINT32 y_end)
   ++x_start;
 }
 
-static void draw_menu_lines(void)
+static void draw_menu_lines(const UINT32 Y_OFF)
 {
   UINT32 menu_start_x = get_menu_start_x();
   UINT32 menu_start_y = get_menu_start_y();
 
-  const UINT32 Y_OFF = 40;
   const UINT32 X_OFF = Y_OFF;
 
   // Draw the top line.
@@ -301,15 +320,18 @@ static void draw_menu(void)
       fb[gop_get_index(x, y)] = blend_transparent(old_pixel, 0x000000, 0.9);
     }
   }
-
-  draw_menu_lines();
+  
+  draw_menu_lines(MENU_LINE_SPACING);
+  UINT32 current_entry_y = menu_start_y+FONT_HEIGHT;
   putstr(get_str_x(MENU_TITLE),
-         menu_start_y+FONT_HEIGHT,
+         current_entry_y,
          MENU_TITLE,
          MENU_TEXT_COLOR,
          0,
          0);
 
+  current_entry_y += FONT_HEIGHT*2;
+  
   putstr(get_str_x(MENU_HELP),
          menu_start_y+(MENU_HEIGHT-20),
          MENU_HELP,
@@ -317,6 +339,27 @@ static void draw_menu(void)
          0,
          0
   );
+
+  for (menu_entry_t i = 0; i < MENU_ENTRY_TOP; ++i)
+  {
+    UINT32 fg = i == selected_entry ? MENU_ENTRY_SEL_FG : MENU_ENTRY_COLOR;
+
+    // Entry position.
+    UINT32 ypos = (menu_start_y+MENU_LINE_SPACING)+FONT_HEIGHT*i;
+    UINT32 xpos = get_str_x(menu_entry_strtab[i]);
+
+    ypos += FONT_HEIGHT;
+
+    putstr(xpos,
+           ypos,
+           menu_entry_strtab[i],
+           fg,
+           MENU_ENTRY_SEL_BG,
+           i == selected_entry
+    );
+
+    current_entry_y += FONT_HEIGHT;
+  }
 }
 
 static void draw_ui(void)
@@ -324,6 +367,54 @@ static void draw_ui(void)
   draw_wallpaper(0, 0, gop_get_width(), gop_get_height());
   draw_menu();
   gop_swap_buffers_at(0, 0, gop_get_width(), gop_get_height());
+}
+
+static void next_menu_entry(void)
+{
+  if (selected_entry < MENU_ENTRY_TOP-1)
+  {
+    ++selected_entry;
+  }
+}
+
+static void prev_menu_entry(void)
+{
+  if (selected_entry > 0)
+  {
+    --selected_entry;
+  }
+}
+
+static void refresh_menu(void)
+{
+  draw_wallpaper(get_menu_start_x(),
+                 get_menu_start_y(),
+                 get_menu_start_x()+MENU_WIDTH,
+                 get_menu_start_y()+MENU_HEIGHT
+  );
+
+  draw_menu();
+  gop_swap_buffers_at(get_menu_start_x(),
+                      get_menu_start_y(),
+                      get_menu_start_x()+MENU_WIDTH,
+                      get_menu_start_y()+MENU_HEIGHT
+  );
+}
+
+static void run_menu_entry(void)
+{
+  switch (selected_entry)
+  {
+    case MENU_ENTRY_REBOOT:
+      uefi_call_wrapper(RT->ResetSystem,
+                        4,
+                        EfiResetCold,
+                        0,
+                        0,
+                        NULL);
+
+      for (;;);
+  }
 }
 
 /*
@@ -338,7 +429,31 @@ static void handle_efi_input_key(EFI_INPUT_KEY key)
     case '+':
       gop_next_mode();
       draw_ui(); 
-      break;
+      return;
+    case L'j':
+      next_menu_entry();
+      refresh_menu();
+      return;
+    case L'k':
+      prev_menu_entry();
+      refresh_menu();
+      return;
+    case L'\r':
+      run_menu_entry();
+      return;
+
+  }
+
+  switch (key.ScanCode)
+  {
+    case SCAN_DOWN:
+      next_menu_entry();
+      refresh_menu();
+      return;
+    case SCAN_UP:
+      prev_menu_entry();
+      refresh_menu();
+      return;
   }
 }
 
@@ -359,10 +474,12 @@ void menu_start(void)
     
     if (s == EFI_NOT_READY)
     {
+      // Keystroke not ready so we stall for 1000 to prevent
+      // overloading the system.
       uefi_call_wrapper(BS->Stall, 1, 1000);
       continue;
     }
-
+    
     handle_efi_input_key(key);
   }
 }
