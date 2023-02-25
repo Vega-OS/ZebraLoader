@@ -1,6 +1,8 @@
 /*
- * elf file loader
+ * @description: ELF file loader
+ * @author: Queso Fuego
  */
+
 #include <dev/disk.h>
 #include <elf.h>
 #include <loader.h>
