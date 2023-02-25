@@ -1815,7 +1815,7 @@ if test ${with_wallpaper_filename+y}
 then :
   withval=$with_wallpaper_filename; wallpaper_filename="$withval"
 else $as_nop
-  wallpaper_filename="wallpaper.bmp"
+  wallpaper_filename=""
 fi
 
 
