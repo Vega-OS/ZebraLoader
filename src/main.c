@@ -9,6 +9,7 @@
 #include <dev/gop.h>
 #include <dev/disk.h>
 #include <mm/pmm.h>
+#include <loader.h>
 
 EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *st)
 {

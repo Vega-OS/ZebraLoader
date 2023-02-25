@@ -8,6 +8,6 @@
 
 #include <def.h>
 
-void load_kernel(EFI_HANDLE image_handle);
+void load_kernel(CHAR16 *file_name);
 
 #endif

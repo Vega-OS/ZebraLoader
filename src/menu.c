@@ -9,6 +9,7 @@
 #include <string.h>
 #include <dev/disk.h>
 #include <dev/gop.h>
+#include <loader.h>
 
 #define MENU_HEIGHT 400
 #define MENU_WIDTH  500
@@ -427,7 +428,9 @@ static void run_menu_entry(void)
                         0,
                         0,
                         NULL);
-
+      for (;;);
+    case MENU_ENTRY_BOOT:
+      load_kernel(__KERNEL_ELF);
       for (;;);
   }
 }
