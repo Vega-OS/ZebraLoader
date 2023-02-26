@@ -27,7 +27,7 @@ void load_kernel(CHAR16 *file_name)
   if (!elf_file)
   {
     Print(L"Could not get file %s\n", file_name);
-    return;
+    halt();
   }
 
   // Get file size
@@ -36,7 +36,7 @@ void load_kernel(CHAR16 *file_name)
   if (EFI_ERROR(status))
   {
     Print(L"Could not get size of file %s\n", file_name);
-    return;
+    halt();
   }
 
   // Allocate memory for file
@@ -50,7 +50,7 @@ void load_kernel(CHAR16 *file_name)
   if (EFI_ERROR(status))
   {
     Print(L"Could not allocate memory for file %s\n", file_name);
-    return;
+    halt();
   }
 
   // Load file to memory
@@ -63,7 +63,7 @@ void load_kernel(CHAR16 *file_name)
   if (EFI_ERROR(status))
   {
     Print(L"Could not load file %s to memory\n", file_name);
-    return;
+    halt();
   }
 
   // Parse elf header
@@ -72,7 +72,7 @@ void load_kernel(CHAR16 *file_name)
   if (!is_eh_valid(elf_hdr))
   {
     Print(L"Kernel ELF header not valid!\n");
-    return;
+    halt();
   }
 
   Print(L"Found ELF entry point: 0x%x\n", elf_hdr->e_entry);
