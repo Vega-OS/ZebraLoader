@@ -8,7 +8,6 @@
 #include <cpuid.h>
 
 #define MB 0x100000
-#define _2_MB (0x100000*2)
 
 static UINT8 is_1gib_page_supported(void)
 {

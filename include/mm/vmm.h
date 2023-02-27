@@ -15,6 +15,7 @@
 #define PTE_HUGE_PAGE (1 << 7)
 #define PTE_ADDR_MASK 0x000FFFFFFFFFF000
 #define PTE_GET_ADDR(VALUE) ((VALUE) & PTE_ADDR_MASK)
+#define _2_MB (0x100000*2)
 
 typedef enum
 {
