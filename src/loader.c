@@ -24,13 +24,29 @@ static UINT8 is_eh_valid(Elf64_Ehdr *eh)
          && eh->e_machine == EM_X86_64;
 }
 
+static void map_framebuffer(UINTN *kernel_pagemap)
+{
+  UINT32 fb_size = gop_get_pitch()*gop_get_height();
+  UINTN fb_base = (UINTN)gop_get_addr();
+
+  for (UINTN i = fb_base; i < fb_base+fb_size; i += _2_MB)
+  {
+    vmm_map_page(kernel_pagemap,
+                 i,
+                 i,
+                 PTE_PRESENT | PTE_WRITABLE,
+                 PAGESIZE_2MiB
+    );
+  }
+}
+
 static void init_proto(struct vega_info *info)
 {
   gop_destroy_backbuffer();
   info->fb = gop_get_addr();
   info->fb_width = gop_get_width();
   info->fb_height = gop_get_height();
-  info->fb_pitch = gop_get_pitch();
+  info->fb_pitch = gop_get_pitch(); 
 }
 
 static void map_segment(Elf64_Addr segment, UINTN *kernel_pagemap,
@@ -62,6 +78,8 @@ static void do_load(Elf64_Ehdr *eh)
   Elf64_Phdr *phdr = NULL;
   UINT8 *ptr = NULL;
   UINTN size;
+
+  map_framebuffer(kernel_pagemap);
   
   size = eh->e_phnum * eh->e_phentsize; 
   phdrs = (void*)((UINTN)eh + eh->e_phoff);   // Start of phdrs.
