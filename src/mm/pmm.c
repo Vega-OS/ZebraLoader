@@ -119,33 +119,6 @@ static void init_mmap(void)
   FreePool(efi_mmap);
 }
 
-/*
- *  Returns 1 if `entry` overlaps
- *  with a reserved segment, otherwise 0.
- */
-
-static UINT8 does_overlap_reserved(struct zebra_mmap_entry *entry)
-{
-  for (UINTN i = 0; i < mmap.entry_count; ++i)
-  {
-    struct zebra_mmap_entry *reserved = &mmap.map[i];
-    UINTN reserved_end_phys = reserved->phys_base+(reserved->page_count*4096);
-
-    if (reserved->type != ZEBRA_MEM_RESERVED)
-    {
-      continue;
-    }
-    
-    if ((entry->phys_base + (entry->page_count*4096) >= reserved->phys_base)
-        && (entry->phys_base + (entry->page_count*4096) < reserved_end_phys))
-    {
-      return 1;
-    }
-  }
-
-  return 0;
-}
-
 static struct zebra_mmap_entry *get_free_segment(void)
 {
   for (UINTN i = 0; i < mmap.entry_count; ++i)
