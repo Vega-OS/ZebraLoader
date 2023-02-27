@@ -120,7 +120,7 @@ static void do_load(Elf64_Ehdr *eh)
 
 void load_kernel(CHAR16 *file_name)
 {
-  // Get file
+  /* Get file */
   EFI_FILE *elf_file = disk_get_file(file_name);
   if (!elf_file)
   {
@@ -128,7 +128,7 @@ void load_kernel(CHAR16 *file_name)
     halt();
   }
 
-  // Get file size
+  /* Get file size */
   UINTN size;
   EFI_STATUS status = disk_get_size(elf_file, &size);
   if (EFI_ERROR(status))
@@ -137,7 +137,7 @@ void load_kernel(CHAR16 *file_name)
     halt();
   }
 
-  // Allocate memory for file
+  /* Allocate memory for file */
   VOID *file_buffer;
   status = uefi_call_wrapper(BS->AllocatePool, 3,
                              EfiLoaderData,
@@ -151,7 +151,7 @@ void load_kernel(CHAR16 *file_name)
     halt();
   }
 
-  // Load file to memory
+  /* Load file to memory */
   status = uefi_call_wrapper(elf_file->Read, 3, 
                              elf_file,
                              &size,
@@ -164,7 +164,7 @@ void load_kernel(CHAR16 *file_name)
     halt();
   }
 
-  // Parse elf header
+  /* Parse elf header */
   Elf64_Ehdr *elf_hdr = (Elf64_Ehdr *)file_buffer;
   
   if (!is_eh_valid(elf_hdr))
