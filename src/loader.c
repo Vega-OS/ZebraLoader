@@ -80,7 +80,6 @@ static void do_load(Elf64_Ehdr *eh)
   UINT8 *ptr = NULL;
   UINTN size;
 
-  Print(L"LINE: %d\n", __LINE__);
   map_framebuffer(kernel_pagemap);
   
   size = eh->e_phnum * eh->e_phentsize; 
