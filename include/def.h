@@ -17,4 +17,6 @@
   Print(L"-- System Halted --\n");        \
   __asm("cli; hlt")
 
+extern EFI_HANDLE g_image_handle;
+
 #endif

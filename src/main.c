@@ -11,9 +11,12 @@
 #include <mm/pmm.h>
 #include <loader.h>
 
+EFI_HANDLE g_image_handle;
+
 EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *st)
 {
   InitializeLib(image_handle, st);
+  g_image_handle = image_handle;
   uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, 0);
   uefi_call_wrapper(BS->SetWatchdogTimer,    // Disable the watchdog timer
                     4,
