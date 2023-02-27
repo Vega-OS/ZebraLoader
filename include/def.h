@@ -13,6 +13,9 @@
 #define __packed    __attribute__((packed))
 #define SAFE_DIV(num, den) ((den) == 0 ? 0 : (num) / (den))
 
+#define ALIGN_DOWN(address, align)  ((address) & ~((align)-1))
+#define ALIGN_UP(address, align)    (((address) + (align)-1) & ~((align)-1))
+
 #define halt()                            \
   Print(L"-- System Halted --\n");        \
   __asm("cli; hlt")
