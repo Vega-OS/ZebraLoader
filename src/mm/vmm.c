@@ -9,28 +9,14 @@
 #include <cpuid.h>
 #include <string.h>
 
-#define MB 0x100000
+/*
+ *  Invalidates a single page from
+ *  the TLB.
+ */
 
-static inline void tlb_flush_single(UINTN vaddr) {
-  __asm("invlpg (%0)" :: "r" (vaddr) : "memory");
-}
-
-static UINT8 is_1gib_page_supported(void)
+static inline void tlb_flush_single(UINTN vaddr)
 {
-  static UINT8 has_cache = 0;
-  static UINT8 cache_val = 0;
-
-  if (has_cache)
-  {
-    return cache_val;
-  }
-  
-  UINT32 unused, edx;
-  __cpuid(0x80000001, unused, unused, unused, edx);
-
-  cache_val = (edx & (1 << 26)) != 0;
-  has_cache = 1;
-  return cache_val;
+  __asm("invlpg (%0)" :: "r" (vaddr) : "memory");
 }
 
 /*
@@ -86,6 +72,7 @@ void vmm_map_page(UINTN *pagemap, UINTN virt, UINTN phys,
   
   if (page_size == PAGESIZE_2MiB)
   {
+    /* Map 2 MiB page if requested */
     pd[pd_index] = phys | flags | PTE_HUGE_PAGE;
     tlb_flush_single(virt);
     return;
