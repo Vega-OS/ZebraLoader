@@ -4,6 +4,8 @@
  */
 
 #include <dev/disk.h>
+#include <proto/vega.h>
+#include <dev/gop.h>
 #include <mm/vmm.h>
 #include <mm/pmm.h>
 #include <elf.h>
@@ -20,6 +22,15 @@ static UINT8 is_eh_valid(Elf64_Ehdr *eh)
          && eh->e_ident[EI_DATA] == ELFDATA2LSB
          && eh->e_type == ET_EXEC
          && eh->e_machine == EM_X86_64;
+}
+
+static void init_proto(struct vega_info *info)
+{
+  gop_destroy_backbuffer();
+  info->fb = gop_get_addr();
+  info->fb_width = gop_get_width();
+  info->fb_height = gop_get_height();
+  info->fb_pitch = gop_get_pitch();
 }
 
 static void map_segment(Elf64_Addr segment, UINTN *kernel_pagemap,
@@ -43,6 +54,9 @@ static void map_segment(Elf64_Addr segment, UINTN *kernel_pagemap,
 
 static void do_load(Elf64_Ehdr *eh)
 {
+  struct vega_info *info = AllocatePool(sizeof(struct vega_info));
+  init_proto(info);
+
   UINTN *kernel_pagemap = vmm_new_pagemap();
   Elf64_Phdr *phdrs = NULL;
   Elf64_Phdr *phdr = NULL;
@@ -77,8 +91,10 @@ static void do_load(Elf64_Ehdr *eh)
   struct zebra_mmap mmap = pmm_get_mmap();
   uefi_call_wrapper(BS->ExitBootServices, 2, g_image_handle, mmap.efi_map_key);
 
-  UINTN kentry = eh->e_entry;
-  __asm("cli; jmp *%0" :: "r" (kentry));
+  void(*kentry)(struct vega_info *);
+  kentry = ((__attribute__((sysv_abi))void(*)(struct vega_info *))eh->e_entry);
+
+  kentry(info);
   __builtin_unreachable();
 }
 
