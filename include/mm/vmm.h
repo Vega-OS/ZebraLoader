@@ -20,7 +20,6 @@
 typedef enum
 {
   PAGESIZE_2MiB,
-  PAGESIZE_1GiB,
   PAGESIZE_4K
 } pagesize_t;
 
@@ -35,13 +34,13 @@ typedef enum
  *  @page_size: Size of page.
  */
 
-void vmm_map_page(UINTN* pagemap, UINTN virt, UINTN phys,
+void vmm_map_page(UINTN *pagemap, UINTN virt, UINTN phys,
                   UINTN flags, pagesize_t page_size);
 
 /*
  *  Creates a new pagemap.
  */
 
-UINTN* vmm_new_pagemap(void);
+UINTN *vmm_new_pagemap(void);
 
 #endif
