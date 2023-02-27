@@ -11,6 +11,12 @@
 static struct zebra_mmap mmap;
 static struct zebra_mmap_entry* usable_entry = NULL;
 
+static void align_mmap_entry(struct zebra_mmap_entry *entry)
+{
+  entry->phys_base = ALIGN_UP(entry->phys_base, 4096);
+  entry->page_count = ALIGN_DOWN(entry->page_count*4096, 4096)/4096;
+}
+
 /*
  *  Parses the EFI memory map
  *  and fills the zebra memory map.
@@ -19,7 +25,7 @@ static struct zebra_mmap_entry* usable_entry = NULL;
 static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
                            UINTN efi_mmap_size, UINTN efi_descriptor_size)
 {
-  EFI_MEMORY_DESCRIPTOR* entry = efi_mmap;
+  EFI_MEMORY_DESCRIPTOR *entry = efi_mmap;
   mmap.map = AllocatePool(efi_mmap_size);
   mmap.entry_count = 0;
   UINTN total_bytes = 0;
@@ -41,7 +47,8 @@ static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
     }
 
     mmap.map[mmap.entry_count].phys_base = entry->PhysicalStart;
-    mmap.map[mmap.entry_count++].page_count = entry->NumberOfPages;
+    mmap.map[mmap.entry_count].page_count = entry->NumberOfPages;
+    align_mmap_entry(&mmap.map[mmap.entry_count++]);
 
     total_bytes += entry->NumberOfPages * 4096;
     entry = NEXT_MEMORY_DESCRIPTOR(entry, efi_descriptor_size);
@@ -61,7 +68,7 @@ static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
 static void init_mmap(void)
 {
   EFI_STATUS status;
-  EFI_MEMORY_DESCRIPTOR* efi_mmap = NULL;
+  EFI_MEMORY_DESCRIPTOR *efi_mmap = NULL;
   UINTN efi_mmap_size = 0;
   UINTN efi_map_key;
   UINTN efi_descriptor_size;
@@ -112,46 +119,68 @@ static void init_mmap(void)
   FreePool(efi_mmap);
 }
 
+/*
+ *  Returns 1 if `entry` overlaps
+ *  with a reserved segment, otherwise 0.
+ */
+
+static UINT8 does_overlap_reserved(struct zebra_mmap_entry *entry)
+{
+  for (UINTN i = 0; i < mmap.entry_count; ++i)
+  {
+    struct zebra_mmap_entry *reserved = &mmap.map[i];
+    UINTN reserved_end_phys = reserved->phys_base+(reserved->page_count*4096);
+
+    if (reserved->type != ZEBRA_MEM_RESERVED)
+    {
+      continue;
+    }
+    
+    if ((entry->phys_base + (entry->page_count*4096) >= reserved->phys_base)
+        && (entry->phys_base + (entry->page_count*4096) < reserved_end_phys))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+static struct zebra_mmap_entry *get_free_segment(void)
+{
+  for (UINTN i = 0; i < mmap.entry_count; ++i)
+  {
+    struct zebra_mmap_entry *entry = &mmap.map[i];
+    if (entry->type == ZEBRA_MEM_USABLE)
+    {
+      return entry;
+    }
+  }
+
+  return NULL;
+}
+
 struct zebra_mmap pmm_get_mmap(void)
 {
   return mmap;
 }
 
-static void find_usable_entry(void)
-{
-  for (UINTN i = 0; i < mmap.entry_count; ++i)
-  {
-    struct zebra_mmap_entry* entry = &mmap.map[i];
-    if (entry->type == ZEBRA_MEM_USABLE)
-    {
-      usable_entry = &mmap.map[i];
-      return;
-    }
-  }
-
-  Print(L"No more memory!\n");
-  halt();
-}
-
 UINTN pmm_alloc_frame(void)
 {
-  UINTN ret = 0;
-
-  if (usable_entry->page_count == 0)
-  {
-    usable_entry->type = ZEBRA_MEM_RESERVED;
-    find_usable_entry(); 
-  }
+  struct zebra_mmap_entry *usable_segment = get_free_segment();
+  UINTN ret = usable_segment->phys_base;
+  usable_segment->phys_base += 4096;
+  --usable_segment->page_count;
   
-  --usable_entry->page_count;
+  if (usable_segment->page_count == 0)
+  {
+    usable_segment->type = ZEBRA_MEM_RESERVED;
+  }
 
-  ret = usable_entry->phys_base;
-  usable_entry->phys_base += 4096;
   return ret;
 }
 
 void pmm_init(void)
 {
   init_mmap();
-  find_usable_entry();
 }
