@@ -9,5 +9,6 @@
 #include <def.h>
 
 UINTN strlen(const char *str);
+void memzero(void* mem, UINTN bytes);
 
 #endif
