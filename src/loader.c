@@ -55,6 +55,7 @@ static void map_segment(Elf64_Addr segment, UINTN *kernel_pagemap,
   for (UINTN i = 0; i < page_count*0x1000; i += 0x1000)
   {
     UINTN addr = segment+i;
+
     vmm_map_page(kernel_pagemap,
                  addr,
                  (UINTN)AllocatePool(0x1000),
@@ -79,21 +80,26 @@ static void do_load(Elf64_Ehdr *eh)
   UINT8 *ptr = NULL;
   UINTN size;
 
+  Print(L"LINE: %d\n", __LINE__);
   map_framebuffer(kernel_pagemap);
   
   size = eh->e_phnum * eh->e_phentsize; 
-  phdrs = (void*)((UINTN)eh + eh->e_phoff);   // Start of phdrs.
+  phdrs = (void*)((UINTN)eh + eh->e_phoff);   /* Start of phdrs */
   phdr = phdrs;
 
   UINTN phdrs_start = (UINTN)phdrs;
 
-  __asm("mov %0, %%cr3" :: "r" ((UINTN)kernel_pagemap));  // Switch vaddrsp.
+  struct zebra_mmap mmap = pmm_get_mmap();
+  uefi_call_wrapper(BS->ExitBootServices, 2, g_image_handle, mmap.efi_map_key);
+  __asm("cli; mov %0, %%cr3" :: "r" ((UINTN)kernel_pagemap));  /* Switch vaddrsp */
+
   while ((UINTN)phdr < phdrs_start + size)
   {
-    if (phdr->p_type == PT_LOAD)      // Loadable segment.
+    if (phdr->p_type == PT_LOAD)      /* Loadable segment */
     {
       UINTN page_count = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
       Elf64_Addr segment = phdr->p_vaddr;
+
       map_segment(segment, kernel_pagemap, page_count);
 
       ptr = (UINT8*)eh + phdr->p_offset;
@@ -105,9 +111,6 @@ static void do_load(Elf64_Ehdr *eh)
 
     phdr = (Elf64_Phdr*)((UINTN)phdr + eh->e_phentsize);
   }
-
-  struct zebra_mmap mmap = pmm_get_mmap();
-  uefi_call_wrapper(BS->ExitBootServices, 2, g_image_handle, mmap.efi_map_key);
 
   void(*kentry)(struct vega_info *);
   kentry = ((__attribute__((sysv_abi))void(*)(struct vega_info *))eh->e_entry);
@@ -164,7 +167,7 @@ void load_kernel(CHAR16 *file_name)
 
   // Parse elf header
   Elf64_Ehdr *elf_hdr = (Elf64_Ehdr *)file_buffer;
-
+  
   if (!is_eh_valid(elf_hdr))
   {
     Print(L"Kernel ELF header not valid!\n");
