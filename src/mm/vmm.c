@@ -106,16 +106,17 @@ UINTN *vmm_new_pagemap(void)
     }
   }
   
-
-  for (UINTN i = 0; i < _2_MB*10; i += _2_MB)
+  
+  /* Map the first 2 MiB of memory */
+  for (UINTN i = 0; i < _2_MB; i += 0x1000)
   {
     vmm_map_page(pagemap,
                  i,
                  i,
                  PTE_PRESENT | PTE_WRITABLE,
-                 PAGESIZE_2MiB
+                 PAGESIZE_4K
     );
-  }
+  } 
 
   return pagemap;
 }
