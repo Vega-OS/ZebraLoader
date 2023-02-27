@@ -6,6 +6,7 @@
 #include <dev/gop.h>
 
 static UINT32 *backbuffer = NULL;
+static uint8_t backbuffer_enabled = 1;
 static EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = NULL;
 static UINTN num_modes = 0;
 
@@ -129,7 +130,8 @@ UINT32 gop_get_height(void)
 
 UINT32 *gop_get_addr(void)
 {
-  return backbuffer;
+  return backbuffer_enabled ? backbuffer 
+                            : (UINT32 *)gop->Mode->FrameBufferBase;
 }
 
 /*
@@ -150,6 +152,11 @@ UINT32 gop_get_pitch(void)
 void gop_swap_buffers_at(UINT32 start_x, UINT32 start_y,
                          UINT32 end_x, UINT32 end_y)
 {
+  if (!backbuffer_enabled)
+  {
+    return;
+  }
+
   UINT32 *fb = (UINT32 *)gop->Mode->FrameBufferBase;
 
 
@@ -165,6 +172,11 @@ void gop_swap_buffers_at(UINT32 start_x, UINT32 start_y,
 
 void gop_swap_buffers(void)
 {
+  if (!backbuffer_enabled)
+  {
+    return;
+  }
+
   UINT32 *fb = (UINT32 *)gop->Mode->FrameBufferBase;
 
   for (UINT32 i = 0; i < gop->Mode->FrameBufferSize/4; ++i)
@@ -175,6 +187,11 @@ void gop_swap_buffers(void)
 
 void gop_next_mode(void)
 {
+  if (!backbuffer_enabled)
+  {
+    return;
+  }
+
   static UINTN next_mode = 1;
   uefi_call_wrapper(gop->SetMode, 2, gop, next_mode++);
 
@@ -186,4 +203,11 @@ void gop_next_mode(void)
   FreePool(backbuffer);
   backbuffer = AllocatePool(gop->Mode->FrameBufferSize);
   clear_backbuffer();
+}
+
+void gop_destroy_backbuffer(void)
+{
+  FreePool(backbuffer);
+  backbuffer = NULL;
+  backbuffer_enabled = 0;
 }

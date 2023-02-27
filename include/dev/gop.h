@@ -73,6 +73,14 @@ void gop_next_mode(void);
 /*
  * Clear the backbuffer
  */
+
 void clear_backbuffer(void);
+
+/*
+ *  Disables the backbuffer
+ *  and frees the memory allocated for it.
+ */
+
+void gop_destroy_backbuffer(void);
 
 #endif
