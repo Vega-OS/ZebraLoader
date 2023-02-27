@@ -4,6 +4,8 @@
  */
 
 #include <dev/disk.h>
+#include <mm/vmm.h>
+#include <mm/pmm.h>
 #include <elf.h>
 #include <loader.h>
 
@@ -18,6 +20,66 @@ static UINT8 is_eh_valid(Elf64_Ehdr *eh)
          && eh->e_ident[EI_DATA] == ELFDATA2LSB
          && eh->e_type == ET_EXEC
          && eh->e_machine == EM_X86_64;
+}
+
+static void map_segment(Elf64_Addr segment, UINTN *kernel_pagemap,
+                        UINTN page_count)
+{
+  for (UINTN i = 0; i < page_count*0x1000; i += 0x1000)
+  {
+    UINTN addr = segment+i;
+    vmm_map_page(kernel_pagemap,
+                 addr,
+                 (UINTN)AllocatePool(0x1000),
+                 PTE_PRESENT | PTE_WRITABLE,
+                 PAGESIZE_4K
+    );
+  }
+}
+
+/*
+ *  Does the process of loading the kernel.
+ */
+
+static void do_load(Elf64_Ehdr *eh)
+{
+  UINTN *kernel_pagemap = vmm_new_pagemap();
+  Elf64_Phdr *phdrs = NULL;
+  Elf64_Phdr *phdr = NULL;
+  UINT8 *ptr = NULL;
+  UINTN size;
+  
+  size = eh->e_phnum * eh->e_phentsize; 
+  phdrs = (void*)((UINTN)eh + eh->e_phoff);   // Start of phdrs.
+  phdr = phdrs;
+
+  UINTN phdrs_start = (UINTN)phdrs;
+
+  __asm("mov %0, %%cr3" :: "r" ((UINTN)kernel_pagemap));  // Switch vaddrsp.
+  while ((UINTN)phdr < phdrs_start + size)
+  {
+    if (phdr->p_type == PT_LOAD)      // Loadable segment.
+    {
+      UINTN page_count = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
+      Elf64_Addr segment = phdr->p_vaddr;
+      map_segment(segment, kernel_pagemap, page_count);
+
+      ptr = (UINT8*)eh + phdr->p_offset;
+      for (UINTN i = 0; i < phdr->p_filesz; ++i)
+      {
+        ((UINT8*)segment)[i] = ptr[i];
+      }
+    }
+
+    phdr = (Elf64_Phdr*)((UINTN)phdr + eh->e_phentsize);
+  }
+
+  struct zebra_mmap mmap = pmm_get_mmap();
+  uefi_call_wrapper(BS->ExitBootServices, 2, g_image_handle, mmap.efi_map_key);
+
+  UINTN kentry = eh->e_entry;
+  __asm("cli; jmp *%0" :: "r" (kentry));
+  __builtin_unreachable();
 }
 
 void load_kernel(CHAR16 *file_name)
@@ -75,6 +137,6 @@ void load_kernel(CHAR16 *file_name)
     halt();
   }
 
-  Print(L"Found ELF entry point: 0x%x\n", elf_hdr->e_entry);
+  do_load(elf_hdr);
 }
 
