@@ -201,7 +201,18 @@ static void do_load(Elf64_Ehdr *eh)
       );
 
       ptr = (UINT8*)eh + phdr->p_offset;
-      _memset((void*)segment, 0x0, phdr->p_memsz);  /* Ensure it is zero'd */
+      
+      /*
+       *  FIXME: The loader_map() call above
+       *         overwrites some of the mappings made
+       *         by sht_nobits_init().
+       *
+       *         The temporary fix
+       *         is calling _memset with zero
+       *         bytes on the segment.
+       */
+
+      _memset((void*)segment, 0x0, phdr->p_memsz);
 
       for (UINTN i = 0; i < phdr->p_filesz; ++i)
       {
