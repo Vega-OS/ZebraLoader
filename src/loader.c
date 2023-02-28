@@ -10,6 +10,7 @@
 #include <mm/pmm.h>
 #include <elf.h>
 #include <loader.h>
+#include <string.h>
 
 #define HIGHER_HALF 0xFFFFFFFF80000000
 
@@ -29,6 +30,7 @@ static UINT8 is_eh_valid(Elf64_Ehdr *eh)
 /*
  *  Maps the framebuffer
  *  for the kernel.
+ *  TODO: Get rid of this and use loader_map() instead 
  */
 
 static void map_framebuffer(UINTN *kernel_pagemap)
@@ -56,17 +58,19 @@ static void init_proto(struct vega_info *info)
   info->fb_pitch = gop_get_pitch(); 
 }
 
-static void map_segment(Elf64_Addr segment, UINTN *kernel_pagemap,
-                        UINTN page_count)
+
+static void loader_map(UINTN virt, UINTN phys, UINTN *kernel_pagemap,
+                        UINTN page_count, UINT32 flags)
 {
   for (UINTN i = 0; i < page_count*0x1000; i += 0x1000)
   {
-    UINTN addr = segment+i;
+    UINTN vaddr = virt+i;
+    UINTN paddr = phys+i;
 
     vmm_map_page(kernel_pagemap,
-                 addr,
-                 pmm_alloc_frame(),
-                 PTE_PRESENT | PTE_WRITABLE,
+                 vaddr,
+                 paddr,
+                 flags,
                  PAGESIZE_4K
     );
   }
@@ -91,6 +95,9 @@ static inline Elf64_Shdr *get_section(Elf64_Ehdr *eh, UINT32 idx)
 {
   return &get_shdr(eh)[idx];
 }
+
+static UINT8* g_tmp = NULL;
+
 
 /*
  *  Initializes a section with
@@ -117,10 +124,6 @@ static void sht_nobits_init(UINTN *kernel_pagemap, Elf64_Ehdr *eh)
 
     if (section->sh_flags & SHF_ALLOC)
     {
-      /* Section should appear in memory, allocate memory for it */
-      UINTN phys = pmm_alloc_frame();
-      void *mem = (void *)(HIGHER_HALF + phys);
-      
       /* 
        * Get the page table entry flags, should be read-only
        * unless SHF_WRITE of section->sh_flags is set
@@ -132,16 +135,19 @@ static void sht_nobits_init(UINTN *kernel_pagemap, Elf64_Ehdr *eh)
         /* This section contains writable data */
         pte_flags |= PTE_WRITABLE;
       }
+
+      UINTN tmp = pmm_alloc_frame();
       
       /* Map the memory */
-      vmm_map_page(kernel_pagemap,
-                   (UINTN)mem,
-                   phys,
-                   pte_flags,
-                   PAGESIZE_4K
+      loader_map(section->sh_addr,
+                 tmp,
+                 kernel_pagemap,
+                 ALIGN_UP(section->sh_size+1, 4096),
+                 pte_flags
       );
-
-      section->sh_offset = (UINTN)mem - (UINTN)eh;
+      
+      g_tmp = (UINT8*)section->sh_addr;
+      _memset((void*)section->sh_addr, 0xAF, section->sh_size);
     }
   }
 }
@@ -164,9 +170,6 @@ static void do_load(Elf64_Ehdr *eh)
   UINTN phdrs_start = 0;
   
   map_framebuffer(kernel_pagemap);
-
-  /* Initialize memory for stuff like .bss if any */
-  sht_nobits_init(kernel_pagemap, eh);
   
   size = eh->e_phnum * eh->e_phentsize;
   phdrs = (void*)((UINTN)eh + eh->e_phoff);
@@ -177,6 +180,9 @@ static void do_load(Elf64_Ehdr *eh)
   struct zebra_mmap mmap = pmm_get_mmap();
   uefi_call_wrapper(BS->ExitBootServices, 2, g_image_handle, mmap.efi_map_key);
   __asm("cli; mov %0, %%cr3" :: "r" ((UINTN)kernel_pagemap));
+
+  /* Initialize memory for stuff like .bss if any */
+  sht_nobits_init(kernel_pagemap, eh);
   
   /* Begin parsing the program headers */
   while ((UINTN)phdr < phdrs_start + size)
@@ -185,9 +191,17 @@ static void do_load(Elf64_Ehdr *eh)
     {
       UINTN page_count = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
       Elf64_Addr segment = phdr->p_vaddr;
+      
+      /* Ensure the segment is mapped */
+      loader_map(segment,
+                 pmm_alloc(page_count*4096),
+                 kernel_pagemap,
+                 page_count,
+                 PTE_PRESENT | PTE_WRITABLE
+      );
 
-      map_segment(segment, kernel_pagemap, page_count);
       ptr = (UINT8*)eh + phdr->p_offset;
+      _memset((void*)segment, 0x0, phdr->p_memsz);  /* Ensure it is zero'd */
 
       for (UINTN i = 0; i < phdr->p_filesz; ++i)
       {
@@ -196,7 +210,7 @@ static void do_load(Elf64_Ehdr *eh)
     }
 
     phdr = (Elf64_Phdr*)((UINTN)phdr + eh->e_phentsize);
-  } 
+  }
 
   /* Load the kernel! */
   void(*kentry)(struct vega_info *);
