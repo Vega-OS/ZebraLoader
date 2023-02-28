@@ -96,8 +96,6 @@ static inline Elf64_Shdr *get_section(Elf64_Ehdr *eh, UINT32 idx)
   return &get_shdr(eh)[idx];
 }
 
-static UINT8* g_tmp = NULL;
-
 
 /*
  *  Initializes a section with
@@ -145,9 +143,6 @@ static void sht_nobits_init(UINTN *kernel_pagemap, Elf64_Ehdr *eh)
                  ALIGN_UP(section->sh_size+1, 4096),
                  pte_flags
       );
-      
-      g_tmp = (UINT8*)section->sh_addr;
-      _memset((void*)section->sh_addr, 0xAF, section->sh_size);
     }
   }
 }
@@ -201,19 +196,11 @@ static void do_load(Elf64_Ehdr *eh)
       );
 
       ptr = (UINT8*)eh + phdr->p_offset;
-      
-      /*
-       *  FIXME: The loader_map() call above
-       *         overwrites some of the mappings made
-       *         by sht_nobits_init().
-       *
-       *         The temporary fix
-       *         is calling _memset with zero
-       *         bytes on the segment.
-       */
 
+      /* Ensure the segment is zero'd */
       _memset((void*)segment, 0x0, phdr->p_memsz);
-
+      
+      /* Copy to the segment */
       for (UINTN i = 0; i < phdr->p_filesz; ++i)
       {
         ((UINT8*)segment)[i] = ptr[i];
