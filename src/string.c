@@ -19,3 +19,20 @@ void memzero(void* mem, UINTN bytes)
     ((UINT8*)mem)[i] = 0;
   }
 }
+
+void _memset(void* mem, UINT8 byte, UINTN bytes)
+{
+  for (UINTN i = 0; i < bytes; ++i)
+  {
+    ((UINT8*)mem)[i] = byte;
+  }
+}
+
+
+void _memcpy(void* to, void* from, UINTN bytes)
+{
+  for (UINTN i = 0; i < bytes; ++i)
+  {
+    ((UINT8*)to)[i] = ((UINT8*)from)[i];
+  }
+}
