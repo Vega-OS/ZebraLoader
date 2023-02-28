@@ -58,7 +58,7 @@ static void map_segment(Elf64_Addr segment, UINTN *kernel_pagemap,
 
     vmm_map_page(kernel_pagemap,
                  addr,
-                 (UINTN)AllocatePool(0x1000),
+                 pmm_alloc_frame(),
                  PTE_PRESENT | PTE_WRITABLE,
                  PAGESIZE_4K
     );
