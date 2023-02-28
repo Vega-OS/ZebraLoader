@@ -141,7 +141,7 @@ static void sht_nobits_init(UINTN *kernel_pagemap, Elf64_Ehdr *eh)
                    PAGESIZE_4K
       );
 
-      Print(L"Mapped memory for SHT_NOBITS section with SHF_ALLOC flag.\n");
+      section->sh_offset = (UINTN)mem - (UINTN)eh;
     }
   }
 }
