@@ -11,6 +11,8 @@
 #include <elf.h>
 #include <loader.h>
 
+#define HIGHER_HALF 0xFFFFFFFF80000000
+
 /*
  *  Returns 1 if the ELF header
  *  passed is valid.
@@ -23,6 +25,11 @@ static UINT8 is_eh_valid(Elf64_Ehdr *eh)
          && eh->e_type == ET_EXEC
          && eh->e_machine == EM_X86_64;
 }
+
+/*
+ *  Maps the framebuffer
+ *  for the kernel.
+ */
 
 static void map_framebuffer(UINTN *kernel_pagemap)
 {
@@ -66,6 +73,80 @@ static void map_segment(Elf64_Addr segment, UINTN *kernel_pagemap,
 }
 
 /*
+ *  Returns a pointer to the
+ *  list of section headers.
+ */
+
+static inline Elf64_Shdr *get_shdr(Elf64_Ehdr *eh)
+{
+  return (Elf64_Shdr *)((UINTN)eh + eh->e_shoff);
+}
+
+/*
+ *  Returns an ELF section header
+ *  from an index.
+ */
+
+static inline Elf64_Shdr *get_section(Elf64_Ehdr *eh, UINT32 idx)
+{
+  return &get_shdr(eh)[idx];
+}
+
+/*
+ *  Initializes a section with
+ *  type SHT_NOBITS.
+ */
+
+static void sht_nobits_init(UINTN *kernel_pagemap, Elf64_Ehdr *eh)
+{
+  for (UINT32 i = 0; i < eh->e_shnum; ++i)
+  {
+    Elf64_Shdr *section = get_section(eh, i);
+
+    if (section->sh_type != SHT_NOBITS)
+    {
+      /* Skip if the section is present in the file */
+      continue;
+    }
+
+    if (section->sh_size == 0)
+    {
+      /* Section is empty, skip it */
+      continue;
+    }
+
+    if (section->sh_flags & SHF_ALLOC)
+    {
+      /* Section should appear in memory, allocate memory for it */
+      UINTN phys = pmm_alloc_frame();
+      void *mem = (void *)(HIGHER_HALF + phys);
+      
+      /* 
+       * Get the page table entry flags, should be read-only
+       * unless SHF_WRITE of section->sh_flags is set
+       */
+      uint32_t pte_flags = PTE_PRESENT;
+
+      if (section->sh_flags & SHF_WRITE)
+      {
+        /* This section contains writable data */
+        pte_flags |= PTE_WRITABLE;
+      }
+      
+      /* Map the memory */
+      vmm_map_page(kernel_pagemap,
+                   (UINTN)mem,
+                   phys,
+                   pte_flags,
+                   PAGESIZE_4K
+      );
+
+      Print(L"Mapped memory for SHT_NOBITS section with SHF_ALLOC flag.\n");
+    }
+  }
+}
+
+/*
  *  Does the process of loading the kernel.
  */
 
@@ -73,25 +154,31 @@ static void do_load(Elf64_Ehdr *eh)
 {
   struct vega_info *info = AllocatePool(sizeof(struct vega_info));
   init_proto(info);
-
+  
   UINTN *kernel_pagemap = vmm_new_pagemap();
   Elf64_Phdr *phdrs = NULL;
   Elf64_Phdr *phdr = NULL;
   UINT8 *ptr = NULL;
+
   UINTN size;
-
-  map_framebuffer(kernel_pagemap);
+  UINTN phdrs_start = 0;
   
-  size = eh->e_phnum * eh->e_phentsize; 
-  phdrs = (void*)((UINTN)eh + eh->e_phoff);   /* Start of phdrs */
+  map_framebuffer(kernel_pagemap);
+
+  /* Initialize memory for stuff like .bss if any */
+  sht_nobits_init(kernel_pagemap, eh);
+  
+  size = eh->e_phnum * eh->e_phentsize;
+  phdrs = (void*)((UINTN)eh + eh->e_phoff);
   phdr = phdrs;
+  phdrs_start = (UINTN)phdrs;
 
-  UINTN phdrs_start = (UINTN)phdrs;
-
+  /* Exit boot services and switch address spaces */
   struct zebra_mmap mmap = pmm_get_mmap();
   uefi_call_wrapper(BS->ExitBootServices, 2, g_image_handle, mmap.efi_map_key);
-  __asm("cli; mov %0, %%cr3" :: "r" ((UINTN)kernel_pagemap));  /* Switch vaddrsp */
-
+  __asm("cli; mov %0, %%cr3" :: "r" ((UINTN)kernel_pagemap));
+  
+  /* Begin parsing the program headers */
   while ((UINTN)phdr < phdrs_start + size)
   {
     if (phdr->p_type == PT_LOAD)      /* Loadable segment */
@@ -100,8 +187,8 @@ static void do_load(Elf64_Ehdr *eh)
       Elf64_Addr segment = phdr->p_vaddr;
 
       map_segment(segment, kernel_pagemap, page_count);
-
       ptr = (UINT8*)eh + phdr->p_offset;
+
       for (UINTN i = 0; i < phdr->p_filesz; ++i)
       {
         ((UINT8*)segment)[i] = ptr[i];
@@ -109,12 +196,13 @@ static void do_load(Elf64_Ehdr *eh)
     }
 
     phdr = (Elf64_Phdr*)((UINTN)phdr + eh->e_phentsize);
-  }
+  } 
 
+  /* Load the kernel! */
   void(*kentry)(struct vega_info *);
   kentry = ((__attribute__((sysv_abi))void(*)(struct vega_info *))eh->e_entry);
-
   kentry(info);
+
   __builtin_unreachable();
 }
 
@@ -122,6 +210,7 @@ void load_kernel(CHAR16 *file_name)
 {
   /* Get file */
   EFI_FILE *elf_file = disk_get_file(file_name);
+
   if (!elf_file)
   {
     Print(L"Could not get file %s\n", file_name);
@@ -131,6 +220,7 @@ void load_kernel(CHAR16 *file_name)
   /* Get file size */
   UINTN size;
   EFI_STATUS status = disk_get_size(elf_file, &size);
+
   if (EFI_ERROR(status))
   {
     Print(L"Could not get size of file %s\n", file_name);
@@ -175,4 +265,3 @@ void load_kernel(CHAR16 *file_name)
 
   do_load(elf_hdr);
 }
-
