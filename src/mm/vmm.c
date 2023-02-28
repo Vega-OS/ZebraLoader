@@ -94,7 +94,7 @@ UINTN *vmm_new_pagemap(void)
     struct zebra_mmap_entry *entry = &mmap.map[i];
 
     UINTN start = entry->phys_base;
-    UINTN end = start + (entry->page_count*0x1000);
+    UINTN end = start + entry->length_bytes;
     for (UINTN j = start; j < end; j += 0x1000)
     {
       vmm_map_page(pagemap,
