@@ -18,7 +18,7 @@ typedef enum
 struct zebra_mmap_entry
 {
   UINTN phys_base;
-  UINTN page_count;
+  UINTN length_bytes;
   zebra_mem_type_t type;
 };
 
@@ -35,6 +35,7 @@ struct zebra_mmap
 
 void pmm_init(void);
 UINTN pmm_alloc_frame(void);
+UINTN pmm_alloc(UINTN byte_count);
 struct zebra_mmap pmm_get_mmap(void);
 
 #endif

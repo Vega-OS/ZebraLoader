@@ -14,7 +14,7 @@ static struct zebra_mmap_entry* usable_entry = NULL;
 static void align_mmap_entry(struct zebra_mmap_entry *entry)
 {
   entry->phys_base = ALIGN_UP(entry->phys_base, 4096);
-  entry->page_count = ALIGN_DOWN(entry->page_count*4096, 4096)/4096;
+  entry->length_bytes = ALIGN_DOWN(entry->length_bytes, 4096);
 }
 
 /*
@@ -47,7 +47,7 @@ static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
     }
 
     mmap.map[mmap.entry_count].phys_base = entry->PhysicalStart;
-    mmap.map[mmap.entry_count].page_count = entry->NumberOfPages;
+    mmap.map[mmap.entry_count].length_bytes = entry->NumberOfPages*4096;
     align_mmap_entry(&mmap.map[mmap.entry_count++]);
 
     total_bytes += entry->NumberOfPages * 4096;
@@ -119,12 +119,13 @@ static void init_mmap(void)
   FreePool(efi_mmap);
 }
 
-static struct zebra_mmap_entry *get_free_segment(void)
+static struct zebra_mmap_entry *get_free_segment(UINTN size)
 {
   for (UINTN i = 0; i < mmap.entry_count; ++i)
   {
     struct zebra_mmap_entry *entry = &mmap.map[i];
-    if (entry->type == ZEBRA_MEM_USABLE)
+    if (entry->type == ZEBRA_MEM_USABLE && entry->length_bytes >= size
+        && entry->phys_base < 0x100000000)
     {
       return entry;
     }
@@ -140,16 +141,31 @@ struct zebra_mmap pmm_get_mmap(void)
 
 UINTN pmm_alloc_frame(void)
 {
-  struct zebra_mmap_entry *usable_segment = get_free_segment();
-  UINTN ret = usable_segment->phys_base;
-  usable_segment->phys_base += 4096;
-  --usable_segment->page_count;
+  struct zebra_mmap_entry *usable_segment = get_free_segment(4096);
   
-  if (usable_segment->page_count == 0)
+  if (usable_segment == NULL)
   {
-    usable_segment->type = ZEBRA_MEM_RESERVED;
+    __asm("cli; hlt");      /* TODO */
   }
 
+  UINTN ret = usable_segment->phys_base;
+  usable_segment->phys_base += 4096;
+  usable_segment->length_bytes -= 4096;
+  return ret;
+}
+
+UINTN pmm_alloc(UINTN byte_count)
+{
+  struct zebra_mmap_entry *usable_segment = get_free_segment(byte_count);
+  
+  if (usable_segment == NULL)
+  {
+    __asm("cli; hlt");      /* TODO */
+  }
+
+  UINTN ret = usable_segment->phys_base;
+  usable_segment->phys_base += byte_count;
+  usable_segment->length_bytes -= byte_count;
   return ret;
 }
 
