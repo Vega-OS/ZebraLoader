@@ -16,7 +16,7 @@
 #define MENU_TEXT_COLOR 0xF9F6EE
 #define MENU_LINE_COLOR 0x71797E
 #define MENU_LINE_THICKNESS 2
-#define MENU_TITLE "ZebraLoader v0.0.3"     // NOTE: Update version here too.
+#define MENU_TITLE "ZebraLoader v0.0.4"     // NOTE: Update version here too.
 #define MENU_HELP  "Use ARROWS to navigate and ENTER to select"
 
 #define MENU_ENTRY_SEL_FG 0x1B1212

@@ -1,4 +1,4 @@
-AC_INIT([zebra_loader], [0.0.3], [ian@ian-moffett.com])
+AC_INIT([zebra_loader], [0.0.4], [ian@ian-moffett.com])
 CROSS_ERR_MSG="Please run tools/cross.sh"
 
 CFLAGS="-fpic -ffreestanding -fno-stack-protector -fno-stack-check  \\
