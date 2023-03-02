@@ -56,6 +56,8 @@ static void init_proto(struct vega_info *info)
   info->fb_width = gop_get_width();
   info->fb_height = gop_get_height();
   info->fb_pitch = gop_get_pitch(); 
+
+  info->mmap = pmm_get_mmap();
 }
 
 
