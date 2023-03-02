@@ -116,7 +116,17 @@ UINTN *vmm_new_pagemap(void)
                  PTE_PRESENT | PTE_WRITABLE,
                  PAGESIZE_4K
     );
-  } 
+  }
+
+  for (UINTN i = _2_MB; i < 0x40000000; i += _2_MB)
+  {
+    vmm_map_page(pagemap,
+                 i+HIGHER_HALF,
+                 i,
+                 PTE_PRESENT | PTE_WRITABLE,
+                 PAGESIZE_2MiB
+    );
+  }
 
   return pagemap;
 }

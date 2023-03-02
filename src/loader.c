@@ -12,8 +12,6 @@
 #include <loader.h>
 #include <string.h>
 
-#define HIGHER_HALF 0xFFFFFFFF80000000
-
 /*
  *  Returns 1 if the ELF header
  *  passed is valid.
@@ -188,10 +186,14 @@ static void do_load(Elf64_Ehdr *eh)
     {
       UINTN page_count = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
       Elf64_Addr segment = phdr->p_vaddr;
+
+      UINTN segment_aligned = ALIGN_UP(segment, 4096);
+      UINTN phys = segment_aligned > HIGHER_HALF ? segment_aligned - HIGHER_HALF
+                                                 : pmm_alloc(page_count*4096);
       
       /* Ensure the segment is mapped */
-      loader_map(ALIGN_UP(segment, 4096),
-                 pmm_alloc(page_count*4096),
+      loader_map(segment_aligned,
+                 phys,
                  kernel_pagemap,
                  page_count,
                  PTE_PRESENT | PTE_WRITABLE
