@@ -27,7 +27,7 @@ struct zebra_mmap
   struct zebra_mmap_entry* map;
   UINTN entry_count;
 
-  // Internal EFI related fields.
+  /* Internal EFI related fields */
   UINTN efi_map_key;
   UINTN efi_descriptor_size;
   UINTN efi_descriptor_version;
