@@ -16,7 +16,7 @@
 #define MENU_TEXT_COLOR 0xF9F6EE
 #define MENU_LINE_COLOR 0x71797E
 #define MENU_LINE_THICKNESS 2
-#define MENU_TITLE "ZebraLoader v0.0.4"     // NOTE: Update version here too.
+#define MENU_TITLE "ZebraLoader v0.0.4"     /* NOTE: Update version here too. */
 #define MENU_HELP  "Use ARROWS to navigate and ENTER to select"
 
 #define MENU_ENTRY_SEL_FG 0x1B1212
@@ -183,14 +183,14 @@ static void draw_wallpaper(UINT32 start_x, UINT32 start_y,
 
   if (bmp == NULL)
   {
-    // TODO: Handle this. 
+    /* TODO: Handle this.  */
     return;
   }
   
   struct bmp_header* hdr = bmp; 
   if ((hdr->signature & 0xFF) != 'B' || (hdr->signature >> 8) != 'M')
   { 
-    // TODO: Check other hdr stuff.
+    /* TODO: Check other hdr stuff. */
     return;
   }  
 
@@ -281,25 +281,25 @@ static void draw_menu_lines(const UINT32 Y_OFF)
 
   const UINT32 X_OFF = Y_OFF;
 
-  // Draw the top line.
+  /* Draw the top line. */
   draw_line_x(menu_start_y + Y_OFF,
               menu_start_x+X_OFF,
               (menu_start_x+MENU_WIDTH)-X_OFF
   );
 
-  // Draw the bottom line.
+  /* Draw the bottom line. */
   draw_line_x((menu_start_y + MENU_HEIGHT) - Y_OFF,
               menu_start_x + X_OFF,
               (menu_start_x + MENU_WIDTH) - X_OFF
   );
 
-  // Draw the left line.
+  /* Draw the left line. */
   draw_line_y(menu_start_x + X_OFF,
               menu_start_y + Y_OFF,
               (menu_start_y+MENU_HEIGHT) - Y_OFF
   );
 
-  // Draw the right line.
+  /* Draw the right line. */
   draw_line_y((menu_start_x + MENU_WIDTH) - X_OFF,
               menu_start_y + Y_OFF,
               (menu_start_y + MENU_HEIGHT) - Y_OFF
@@ -308,11 +308,11 @@ static void draw_menu_lines(const UINT32 Y_OFF)
 
 static void draw_menu(void)
 {
-  // Get the starting position to draw the menu square. 
+  /* Get the starting position to draw the menu square.  */
   UINT32 menu_start_x = get_menu_start_x();
   UINT32 menu_start_y = get_menu_start_y();
 
-  // Get the framebuffer address to draw on.
+  /* Get the framebuffer address to draw on. */
   UINT32 *fb = gop_get_addr();
 
   for (UINT32 x = menu_start_x; x < menu_start_x+MENU_WIDTH; ++x)
@@ -347,7 +347,7 @@ static void draw_menu(void)
   {
     UINT32 fg = i == selected_entry ? MENU_ENTRY_SEL_FG : MENU_ENTRY_COLOR;
 
-    // Entry position.
+    /* Entry position. */
     UINT32 ypos = (menu_start_y+MENU_LINE_SPACING)+FONT_HEIGHT*i;
     UINT32 xpos = get_str_x(menu_entry_strtab[i]);
 
@@ -494,8 +494,10 @@ void menu_start(void)
     
     if (s == EFI_NOT_READY)
     {
-      // Keystroke not ready so we stall for 1000 to prevent
-      // overloading the system.
+      /* 
+       * Keystroke not ready so we stall for 1000 to prevent
+       * overloading the system.
+       */
       uefi_call_wrapper(BS->Stall, 1, 1000);
       continue;
     }

@@ -18,7 +18,7 @@ EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *st)
   InitializeLib(image_handle, st);
   g_image_handle = image_handle;
   uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, 0);
-  uefi_call_wrapper(BS->SetWatchdogTimer,    // Disable the watchdog timer
+  uefi_call_wrapper(BS->SetWatchdogTimer,    /* Disable the watchdog timer */
                     4,
                     0,
                     0,
@@ -26,14 +26,14 @@ EFI_STATUS efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *st)
                     NULL
   );
 
-  // Check if the boot entryname is of good length.
+  /* Check if the boot entryname is of good length. */
   if (strlen(BOOT_ENTRYNAME) > 22)
   {
     Print(L"Boot entryname length > 22\n");
     halt();
   }
 
-  gop_init();  // Verify GOP and set native mode
+  gop_init();  /* Verify GOP and set native mode */
   pmm_init();
 
   disk_init(image_handle);

@@ -74,7 +74,7 @@ static void init_mmap(void)
   UINTN efi_descriptor_size;
   UINT32 efi_descriptor_version;
   
-  // Fetch the EFI memory map size.
+  /* Fetch the EFI memory map size. */
   status = uefi_call_wrapper(BS->GetMemoryMap,
                              5,
                              &efi_mmap_size,
@@ -98,7 +98,7 @@ static void init_mmap(void)
     halt();
   }
 
-  // Actually fetch the EFI memory map now.
+  /* Actually fetch the EFI memory map now. */
   efi_mmap_size = efi_mmap_size + 2 * efi_descriptor_size;
   status = uefi_call_wrapper(BS->GetMemoryMap,
                              5,

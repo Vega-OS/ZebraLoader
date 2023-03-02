@@ -38,7 +38,7 @@ static EFI_GRAPHICS_OUTPUT_PROTOCOL *get_gop(void)
 
 void clear_backbuffer(void)
 {
-  // Clear the backbuffer.
+  /* Clear the backbuffer. */
   for (UINT32 i = 0; i < gop->Mode->FrameBufferSize/4; ++i)
   {
     backbuffer[i] = 0;
@@ -60,7 +60,7 @@ void gop_init(void)
   backbuffer = AllocatePool(gop->Mode->FrameBufferSize);
   clear_backbuffer();
 
-  // Get available modes.
+  /* Get available modes. */
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info = NULL;
   UINTN sizeof_info, native_mode;
 
@@ -72,7 +72,7 @@ void gop_init(void)
                              &info
   );
   
-  // Get around buggy UEFI firmware.
+  /* Get around buggy UEFI firmware. */
   if (status == EFI_NOT_STARTED)
   {
     status = uefi_call_wrapper(gop->SetMode, 2, gop, 0);
