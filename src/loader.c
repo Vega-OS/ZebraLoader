@@ -190,7 +190,7 @@ static void do_load(Elf64_Ehdr *eh)
       Elf64_Addr segment = phdr->p_vaddr;
       
       /* Ensure the segment is mapped */
-      loader_map(segment,
+      loader_map(ALIGN_UP(segment, 4096),
                  pmm_alloc(page_count*4096),
                  kernel_pagemap,
                  page_count,
