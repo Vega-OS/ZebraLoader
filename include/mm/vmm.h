@@ -8,6 +8,8 @@
 
 #include <def.h>
 
+#define HIGHER_HALF 0xFFFFFFFF80000000
+
 /* Page translation table entry bits */
 #define PTE_PRESENT   (1 << 0)
 #define PTE_WRITABLE  (1 << 1)
