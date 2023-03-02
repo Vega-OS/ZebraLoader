@@ -28,7 +28,7 @@ static inline void tlb_flush_single(UINTN vaddr)
  *  @alloc: 1 to allocate new structure if not present, 0 to return NULL.
  */
 
-static UINTN* get_next_level(UINTN *top_level, UINTN index,
+static UINTN *get_next_level(UINTN *top_level, UINTN index,
                              UINT8 alloc)
 {
   if (top_level[index] & PTE_PRESENT)
@@ -85,13 +85,13 @@ void vmm_map_page(UINTN *pagemap, UINTN virt, UINTN phys,
 
 UINTN *vmm_new_pagemap(void)
 {
-  struct zebra_mmap mmap = pmm_get_mmap();
+  struct zebra_mmap *mmap = pmm_get_mmap();
   UINTN *pagemap = (UINTN *)pmm_alloc_frame();
   memzero(pagemap, 4096);
 
-  for (UINTN i = 0; i < mmap.entry_count; ++i)
+  for (UINTN i = 0; i < mmap->entry_count; ++i)
   {
-    struct zebra_mmap_entry *entry = &mmap.map[i];
+    struct zebra_mmap_entry *entry = &mmap->map[i];
 
     UINTN start = entry->phys_base;
     UINTN end = start + entry->length_bytes;

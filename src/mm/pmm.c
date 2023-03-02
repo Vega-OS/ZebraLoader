@@ -9,7 +9,7 @@
   ((EFI_MEMORY_DESCRIPTOR *)((UINT8 *)(mem_desc) + (size)))
 
 static struct zebra_mmap mmap;
-static struct zebra_mmap_entry* usable_entry = NULL;
+static struct zebra_mmap_entry *usable_entry = NULL;
 
 static void align_mmap_entry(struct zebra_mmap_entry *entry)
 {
@@ -22,7 +22,7 @@ static void align_mmap_entry(struct zebra_mmap_entry *entry)
  *  and fills the zebra memory map.
  */
 
-static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR* efi_mmap,
+static void parse_efi_mmap(EFI_MEMORY_DESCRIPTOR *efi_mmap,
                            UINTN efi_mmap_size, UINTN efi_descriptor_size)
 {
   EFI_MEMORY_DESCRIPTOR *entry = efi_mmap;
@@ -134,9 +134,9 @@ static struct zebra_mmap_entry *get_free_segment(UINTN size)
   return NULL;
 }
 
-struct zebra_mmap pmm_get_mmap(void)
+struct zebra_mmap *pmm_get_mmap(void)
 {
-  return mmap;
+  return &mmap;
 }
 
 UINTN pmm_alloc_frame(void)

@@ -174,8 +174,8 @@ static void do_load(Elf64_Ehdr *eh)
   phdrs_start = (UINTN)phdrs;
 
   /* Exit boot services and switch address spaces */
-  struct zebra_mmap mmap = pmm_get_mmap();
-  uefi_call_wrapper(BS->ExitBootServices, 2, g_image_handle, mmap.efi_map_key);
+  struct zebra_mmap *mmap = pmm_get_mmap();
+  uefi_call_wrapper(BS->ExitBootServices, 2, g_image_handle, mmap->efi_map_key);
   __asm("cli; mov %0, %%cr3" :: "r" ((UINTN)kernel_pagemap));
 
   /* Initialize memory for stuff like .bss if any */

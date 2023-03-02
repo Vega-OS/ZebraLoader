@@ -24,7 +24,7 @@ struct zebra_mmap_entry
 
 struct zebra_mmap
 {
-  struct zebra_mmap_entry* map;
+  struct zebra_mmap_entry *map;
   UINTN entry_count;
 
   /* Internal EFI related fields */
@@ -36,6 +36,6 @@ struct zebra_mmap
 void pmm_init(void);
 UINTN pmm_alloc_frame(void);
 UINTN pmm_alloc(UINTN byte_count);
-struct zebra_mmap pmm_get_mmap(void);
+struct zebra_mmap *pmm_get_mmap(void);
 
 #endif

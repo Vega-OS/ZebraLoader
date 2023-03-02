@@ -18,7 +18,7 @@ struct vega_info
   UINT32 fb_pitch;
   
   /* Physical memory map */
-  struct zebra_mmap mmap;
+  struct zebra_mmap *mmap;
 };
 
 #endif
